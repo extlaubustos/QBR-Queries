@@ -1,3 +1,8 @@
+-- AHA MOMENT (QUERY DE MPLAY) --
+-- En esta query se realiza lo mismo que clasificación donde tambien clasificamos por AHA o NO AHA con la diferencia que el calculo en esta query del AHA se basa en el nuevo criterio donde se analiza todas las fechas de reproducción de los usuarios y si en los 30 dias posteriores logra el AHA. Con el criterio anterior solo se analizaba la 1er fecha del mes
+-- TABLAS --
+-- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
+
 -- Separo la clásica NEW_RET_RECO para optimizar el analisis en 2 subconsultas. En USER_PLAYS_AGG se obtiene la actividad de los usuarios y en USER_DAILY_ACTIVITY se calcula el FLAG_N_R_DAILY como se hacia en NEW_RET_RECO
 WITH USER_PLAYS_AGG AS (
     SELECT

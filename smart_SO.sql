@@ -1,6 +1,9 @@
------------- VERSION CAMI 15:07 DEL 23/7 ----------- 
------- FALTA ULTIMAR ALGO ---------
--- SO_CLAS calcula por USER_ID, SIT_SITE_ID, DS la cantidad de minutos vistos en ANDROID, SAMSUNG, LG, Y TL TOTAL DE TVM siempre que la reproduccion esa mayor a 20seg y solo sea en televisión. ¿TVM va a ser siempre el mismo que los totales o quizas vio en 2 teles?
+-- SMART SO --
+-- En esta query lo que podemos ver es por SIT_SITE_ID, mes y plataforma la cantidad de usuarios y el total de minutos reproducidos con la excepción de que consulta solamente es para usuarios que hayan mirado en TV y la concatenación nos permite saber el tipo de Sistema Operativo
+-- TABLAS --
+-- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
+
+-- SO_CLAS calcula por USER_ID, SIT_SITE_ID, DS la cantidad de minutos vistos en ANDROID, SAMSUNG, LG, Y TL TOTAL DE TVM siempre que la reproduccion esa mayor a 20seg y solo sea en televisión
 WITH SO_CLAS AS (
     SELECT
         USER_ID,
