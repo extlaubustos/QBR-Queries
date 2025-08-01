@@ -1,4 +1,15 @@
--- DECLARO Y ESTABLEZCO VARIABLES QUE VOY A USAR
+-- EXTRACCIÓN DE SESSIONS Y VIEWS --
+-- Esta query se utiliza para calcular por sit_site_id, mes y semana, la cantidad de sesiones, usuarios, plataformas y tiempo de reproducción. Se agrupan los datos por origen de la sesión y se cuentan las sesiones y usuarios distintos.
+-- TABLAS --
+-- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
+-- meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION: tabla de sesiones de Play
+-- meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION: tabla de origen de sesiones de Play
+-- OBJETIVO --
+-- Alimenta la hoja BASE y BASE Daily la hoja USERS TVM W del Sheets "Seguimiento Weekly & Monthly por Touchpoint - Mercado Play". Para alimentar BASE Daily modificar el date_from por current_date()-21
+-- Tambien se alimentan las hojas CVR M y CVR W del Sheets Performance Mercado Play - Monthly & Weekly. Para los Week se modifica la agrupación en el select final para agrupar por MONTH_ID o WEEK_ID
+
+
+-- Se declaran las variables de SITES y la fecha de inicio y fin del analisis
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;
 DECLARE date_to DATE;
@@ -6,14 +17,13 @@ SET SITES = ['MLC', 'MLA', 'MLB', 'MLM', 'MCO', 'MPE', 'MLU', 'MEC'];
 SET date_from = '2025-03-03';
 SET date_to = current_date();
 
--- ARMO LOS CTEs
--- CREO EL CTE SESSIONS TRAYENDO VARIAS COLUMNAS DE BT_MKT_PLAY_SESSION
+-- En el CTE SESSIONS tomamos las sesiones de cada mes por SIT_SITE_ID, estableciendo su semana, el origen, su primer track, el primer play, etc., todo esto por usuario y session_id
 WITH SESSIONS AS
               ( SELECT
                       s.SIT_SITE_ID,
-                      -- TRAE EL MONTH DE LA COLUMN ds
+                      -- Se trae el mes truncado de la fecha DS para definir el MONTH_ID
                       DATE_TRUNC(s.ds, MONTH) as MONTH_ID,
-                      -- TRAE EL LUNES DE LA SEMANA DE LA COLUMNA ds
+                      -- Se trae el lunes de cada semana
                       DATE_TRUNC(s.ds, WEEK(MONDAY)) as fecha_week,
                       s.ds,
                       ORIGIN_PATH AS FIRST_EVENT_SOURCE,
@@ -22,18 +32,19 @@ WITH SESSIONS AS
                       s.USER_ID,
                       s.SESSION_ID AS MELIDATA_SESSION_ID,
                       s.DEVICE_PLATFORM,
-                      -- SI SE REALIZO UNA BUSQUEDA, HUBO VCP, VCM, HUBO PLAY ENTONCES DEVUELVE TRUE O SI SE REALIZARON VARIAS IMPRESIONES DEL FEED
+                      -- Se define si es una valid_visit teniendo en cuenta si hay alguna interaccion como una busqueda, si hubo vcp, vcm, mas de una impresion del feed o si hubo reproduccion
                       IF(((S.HAS_SEARCH IS TRUE OR S.HAS_VCP IS TRUE OR S.HAS_VCM IS TRUE OR HAS_PLAY IS TRUE) OR TOTAL_FEED_IMPRESSIONS > 1),TRUE,FALSE) AS FLAG_VALID_VISIT,
                       HAS_PLAY,
+                      -- Se convierte el tiempo de la sesion a segundos
                       S.TOTAL_SESSION_MILLISECOND/1000 AS session_time_sec
               FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION` AS s
-              -- USO LAS VARIABLES DECLARADAS ANTERIORMENTE PARA FILTRAR
+              -- Uso las variables declaradas en el inicio para filtrar por fecha y sites       
               WHERE s.ds >= date_from 
               AND s.ds < date_to
               AND s.SIT_SITE_ID IN UNNEST(SITES)
               GROUP BY ALL
 )
--- CREO EL CTE SESSION_PLAY QUE TRAE VARIAS COLUMNAS DE LA CTE SESSION Y HACE TRANSFORMACIONES PARA ARMAR LOS VALORES DE TSV (tiempo visto) Y TVM (tiempo visto en la sesion)
+-- En este CTE traemos la información del CTE agregandole informacion sobre el TSV y el TVM que se extraen de la tabla de Plays
 , SESSION_PLAY AS   ( 
               SELECT DISTINCT
                     s.SIT_SITE_ID,
@@ -87,7 +98,7 @@ WITH SESSIONS AS
 --QUALIFY ROW_NUMBER() OVER(PARTITION BY USER_ID,DATE_TRUNC(SNAPSHOT_DATE, MONTH) ORDER BY SNAPSHOT_DATE ASC) = 1
 --)
 -----------------------------
--- YA SE SELECCIONAN LAS COLUMNAS NECESARIAS DE LOS CTEs CREADOS
+-- Esta es la consulta final donde por sit_site_id, mes y semana se agrupan los datos de las sesiones, separando por origen, plataforma y contando las sesiones y usuarios
 SELECT 
       s.sit_site_id,
       DATE_TRUNC(s.DS, MONTH) AS MONTH_ID,
@@ -108,14 +119,14 @@ SELECT
            ELSE COALESCE(o.SOURCE_TYPE,'Otros')
            END AS Origin,
       --COALESCE(o.SOURCE_TYPE,'Otros') as Origin,
-      -- CUENTA LOS VALORES UNICOS DE SESSION_ID PARA DETERMINAR EL TOTAL DE Sessions
+      -- Se cuenta el toatl de sesiones
       COUNT(DISTINCT s.melidata_session_id) Sessions,
-      -- CUENTA LA CANTIDAD DE FLAG_VALID_VISIT QUE ES CUANDO HAY ALGUN TIPO DE INTERACCION (ver ctes) Y ARMA SESSIONS_VALID_VISIT
+      -- Se cuentan la cantidad de flag_valid_visit que son las interacciones validas y al contarlas generamos las sesiones que son valid visit
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) as Sessions_valid_visit, ---no tiene en cuenta los bounced
-      -- CUENTA LA CANTIDAD DE SESIONES CUANDO HAY MAS DE 20SEG DE REPRODUCCION PARA ARMAR SESSIONS_VALID_VIEW
+      -- Se cuenta la cantidad de sesiones que tienen un tiempo de reproducción mayor o igual a 20 segundos
       COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.melidata_session_id ELSE NULL END) as Sessions_valid_view,
       SUM(s.TVM) as TVM,
-      -- LAS SGTES 3 COLS TIENEN LA MISMA DEFINICION QUE LAS ANTERIORES TENIENDO EN CUENTA USUARIOS
+      -- Las siguientes 3 columnas son similares a las anteriores pero cuentan los usuarios distintos
       COUNT(DISTINCT s.USER_ID) Visitors,
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) as Valid_Visitors,
       COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) as Viewers
@@ -130,7 +141,7 @@ FROM SESSION_PLAY s
 --                        AND S.sit_site_id = LC.sit_site_id 
 --                        AND  DATE_TRUNC(s.DS, MONTH) = DATE_TRUNC(LC.SNAPSHOT_DATE, MONTH)
 ---------------------
--- JOIN CON LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION PARA TRAER LOS SOURCE_TYPE Y CONVERTIR EN Otros
+-- Se hace un join con LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION para obtener el origen de la sesión
 LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` o on coalesce(s.FIRST_EVENT_SOURCE,'NULL') = coalesce(o.SOURCE_TYPE,'NULL')
 GROUP BY ALL
 ORDER BY WEEK_ID ASC

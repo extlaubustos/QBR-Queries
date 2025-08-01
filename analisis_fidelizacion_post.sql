@@ -1,10 +1,17 @@
----------------------- PROBANDO AGREGAR M4+ ----------------------
-DECLARE start_month DATE DEFAULT DATE '2025-01-01'; 
-DECLARE months_to_analyze INT64 DEFAULT 7;       
+-- ANALISIS DE FIDELIZACIÓN MENSUAL (HACIA ADELANTE) --
+-- Esta query analiza la retención de usuarios en un periodo mensual, clasificando a los usuarios en grupos de retención M1, M2, etc. Se comienza tomando un mes base, especificando la cantidad de meses que se quieren analizar hacia adelante y la cantidad de clasificaciones M. 
+-- TABLAS --
+-- `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`: tabla de control de torre
+-- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
 
+-- Se declara la variable la cual será mi mes base para el análisis
+DECLARE start_month DATE DEFAULT DATE '2025-01-01';
+-- Se definen la cantidad de meses que vamos a analizar hacia adelante
+DECLARE months_to_analyze INT64 DEFAULT 7;       
+-- Esta i sera la variable que se usará para iterar
 DECLARE i INT64 DEFAULT 0;
 
--- Variables que se reutilizan en cada iteración
+-- Se declaran las variables para el mes base y los 11 meses posteriores
 DECLARE base_month DATE;
 DECLARE post_month_1 DATE;
 DECLARE post_month_2 DATE;
@@ -17,7 +24,7 @@ DECLARE post_month_8 DATE;
 DECLARE post_month_9 DATE;
 DECLARE post_month_10 DATE;
 DECLARE post_month_11 DATE;
- 
+ -- Se declaran las variables para las fechas de inicio y fin de los meses base y posteriores
 DECLARE base_month_start DATE;
 DECLARE base_month_end DATE;
 DECLARE post_month_1_start DATE;
@@ -43,7 +50,7 @@ DECLARE post_month_10_end DATE;
 DECLARE post_month_11_start DATE;
 DECLARE post_month_11_end DATE; 
 
--- Crea una tabla temporal para guardar los resultados
+-- Se crea una tabla temporal para guardar los resultados
 CREATE TEMP TABLE retained_summary (
   base_month STRING,
   sit_site_id STRING,
@@ -59,9 +66,9 @@ CREATE TEMP TABLE retained_summary (
   m10_retained INT64,
   m11_retained INT64
 );
-
+-- Se comienza el ciclo de iteración
 WHILE i < months_to_analyze DO
-  -- Calcula fechas para esta iteración
+  -- Primero se calculan el mes base y los meses posteriores
   SET base_month = DATE_ADD(start_month, INTERVAL i MONTH);
   SET post_month_1 = DATE_ADD(base_month, INTERVAL 1 MONTH);
   SET post_month_2 = DATE_ADD(base_month, INTERVAL 2 MONTH);
@@ -74,7 +81,7 @@ WHILE i < months_to_analyze DO
   SET post_month_9 = DATE_ADD(base_month, INTERVAL 9 MONTH);
   SET post_month_10 = DATE_ADD(base_month, INTERVAL 10 MONTH);
   SET post_month_11 = DATE_ADD(base_month, INTERVAL 11 MONTH); 
-
+-- A partir de acá se definen las fechas de inicio y fin de cada mes
   SET base_month_start = DATE_TRUNC(base_month, MONTH);
   SET base_month_end = DATE_SUB(DATE_ADD(base_month_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
 
@@ -111,8 +118,9 @@ WHILE i < months_to_analyze DO
   SET post_month_11_start = DATE_TRUNC(post_month_11, MONTH);
   SET post_month_11_end = DATE_SUB(DATE_ADD(post_month_11_start, INTERVAL 1 MONTH), INTERVAL 1 DAY); 
 
-  -- Ejecuta lógica para ese mes
+  -- En este execute esta la consulta principal
 EXECUTE IMMEDIATE FORMAT("""
+  -- Se insertan los datos en la tabla temporal con las columnas base_month, sit_site_id, y las columnas de retención m1_retained, m2_retained, etc
   INSERT INTO retained_summary
   SELECT
     '%s' AS BASE_MONTH,
@@ -128,6 +136,7 @@ EXECUTE IMMEDIATE FORMAT("""
     COUNTIF(RETAINED_GROUP = 'M9') AS M9_RETAINED,
     COUNTIF(RETAINED_GROUP = 'M10') AS M10_RETAINED,
     COUNTIF(RETAINED_GROUP = 'M11') AS M11_RETAINED
+    -- En este from se realiza una subconsulta para analizar la retención de usuarios en el mes base y los meses posteriores siempre que el TIME_FRAME sea mensual y el LIFE_CYCLE sea 'RETAINED' ya que buscamos que el usuario este como retenido en la tabla de control de torre
   FROM (
     WITH BASE_RETAINED_BASE AS (
       SELECT SIT_SITE_ID, USER_ID
@@ -224,7 +233,8 @@ EXECUTE IMMEDIATE FORMAT("""
         AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
-    ), 
+    ),
+    -- En esta BASE_FULL se combinan todas las bases de retención. Con los IF se determina si el usuario fue retenido en cada mes
     BASE_FULL AS (
       SELECT
         base.SIT_SITE_ID,
@@ -241,7 +251,7 @@ EXECUTE IMMEDIATE FORMAT("""
         IF(m9.USER_ID IS NOT NULL, TRUE, FALSE) AS RETAINED_MAS_9,
         IF(m10.USER_ID IS NOT NULL, TRUE, FALSE) AS RETAINED_MAS_10,
         IF(m11.USER_ID IS NOT NULL, TRUE, FALSE) AS RETAINED_MAS_11 
-    
+      -- Este FROM combina todas las bases de retención dentro de la subconsulta
       FROM BASE_RETAINED_BASE base
       LEFT JOIN BASE_RETAINED_MAS_1 m1
         ON base.USER_ID = m1.USER_ID AND base.SIT_SITE_ID = m1.SIT_SITE_ID
@@ -266,6 +276,7 @@ EXECUTE IMMEDIATE FORMAT("""
               LEFT JOIN BASE_RETAINED_MAS_11 m11
         ON base.USER_ID = m11.USER_ID AND base.SIT_SITE_ID = m11.SIT_SITE_ID 
     ),
+    -- En esta CLASIFICACION se clasifica a los usuarios en grupos de retención M1, M2, etc
     CLASIFICACION AS (
       SELECT
         SIT_SITE_ID,
@@ -290,7 +301,8 @@ EXECUTE IMMEDIATE FORMAT("""
   )
   GROUP BY SIT_SITE_ID
   """,
-  FORMAT_DATE('%Y-%m', base_month_start),  -- 1er parámetro del SELECT
+  -- Se pasan como parámetros las fechas del mes base y los meses posteriores
+  FORMAT_DATE('%Y-%m', base_month_start),
   FORMAT_DATE('%F', base_month_start), FORMAT_DATE('%F', base_month_end),
   FORMAT_DATE('%F', post_month_1_start), FORMAT_DATE('%F', post_month_1_end),
   FORMAT_DATE('%F', post_month_2_start), FORMAT_DATE('%F', post_month_2_end),
@@ -309,7 +321,7 @@ EXECUTE IMMEDIATE FORMAT("""
   SET i = i + 1;
 END WHILE;
 
--- 🔍 Mostramos los resultados acumulados
+-- Mostramos los resultados finales de la tabla temporal
 SELECT * 
 FROM retained_summary 
 ORDER BY base_month 

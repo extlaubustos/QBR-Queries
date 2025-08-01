@@ -1,48 +1,48 @@
--- ARMAMOS CTEs
+-- CLASIFICACION CON AHA --
+-- Esta query genera la clasificacion de usuarios en función de varios aspectos como el tiempo de reproducción, la plataforma utilizada y si el usuario está logueado o no. La clasificacion principal es si el usuario es NEW, RETAINED o RECOVERED. Una clasificación diferente a la realizada en cast es que se agrega el AHA_MOMENT.
+-- NOTA -- Se generan varias combinaciones de posibles clasificaciones en la consulta final.
+-- TABLAS --
+-- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
+
+
+-- En esta CTE se clasifican a los usuarios en NEW, RETAINED o RECOVERED
 WITH NEW_RET_RECO AS
   (
     SELECT 
         *
+        -- Se toma el mes truncado de la fecha DS para definir el TIME_FRAME_ID
       , DATE_TRUNC(DS,MONTH) AS TIME_FRAME_ID --> ACA SOLAMENTE ELEGIMOS EL TIMEFRAME QUE SE QUIERE VER, WEEK,MONTH,DAY 
-      -- TRAE LA DS ANTERIOR USANDO LAG 1 PARTICIONANDO POR SIT_SITE_ID Y USER_ID ORDENANDO ASC POR START_PLAY_TIMESTAMP
+      -- Con este LAG se obtiene la fecha del día anterior al actual, particionando por SIT_SITE_ID y USER_ID
       , LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) AS DS_ANT
-      -- SI NO TIENE DS ANTERIOR DEVUELVE NEW
+      -- En este CASE se define el FLAG_N_R, que puede ser NEW, RETAINED o RECOVERED dependiendo de la diferencia de días entre DS y DS_ANT
       , (CASE WHEN (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)) IS NULL THEN 'NEW' 
-              -- HACE LA DIFERENCIA DE DIAS ENTRE DS Y EL DS ANTERIOR. SI ES MENOR A 30 RETAINED, SI ES MAYOR A 30 RECOVERED
               WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) <= 30 THEN 'RETAINED'
               WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) > 30  THEN 'RECOVERED'
               ELSE NULL END) AS FLAG_N_R,
-    -- TOMA LA MENOR FECHA PARTICIONANDO POR SIT_SITE_ID Y USER_ID PARA TENER REGISTRO DE LA 1RA FECHA REGISTRADA POR USER
+    -- Se toma la menor fecha por SIT_SITE_ID y USER_ID para definir la primer fecha de visualización del usuario
      MIN(DS) OVER (PARTITION BY SIT_SITE_ID,USER_ID) AS FIRST_DS_USER
-
-
     FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`
-    -- HACEMOS DIVISION PARA SABER CONSUMOS MAYORES A 20SEG
     WHERE  PLAYBACK_TIME_MILLISECONDS/1000 >= 20
-    -- NOS FIJAMOS QUE LA COLUMNA DS SEA MENOR A LA FECHA ACTUAL - 1 DIA
       AND DS <= CURRENT_DATE-1
   ),
-  -- SUBCONSULTA PARA TRAER EL 1ER REGISTRO DE CADA MES?
-  ATTR_TIME_FRAME_ELEGIDO AS (
 
+  -- La CTE ATTR_TIME_FRAME_ELEGIDO selecciona el primer registro de cada mes para cada usuario, manteniendo el FLAG_N_R
+  ATTR_TIME_FRAME_ELEGIDO AS (
           SELECT 
           SIT_SITE_ID,
           USER_ID,
           TIME_FRAME_ID,
-          FLAG_N_R,
-          DS AS FECHA_FLAG_N_R
+          FLAG_N_R
           FROM NEW_RET_RECO
-          QUALIFY ROW_NUMBER()  OVER(PARTITION BY SIT_SITE_ID,USER_ID,
-                                                TIME_FRAME_ID
-                                          ORDER BY START_PLAY_TIMESTAMP ASC) =  1 --> ME QUEDO CON EL PRIMER PLAY DEL TIMEFRAME PARA ATRIBUIR 1 
+          QUALIFY ROW_NUMBER()  OVER(PARTITION BY SIT_SITE_ID,USER_ID, TIME_FRAME_ID ORDER BY START_PLAY_TIMESTAMP ASC) =  1
   ),
--- SUBCONSULTA PARA GENERAR EL AHA_MOMENT
+  -- Se realiza un cruce entre NEW_RET_RECO y ATTR_TIME_FRAME_ELEGIDO para obtener el FLAG_N_R final teniendo en cuenta el primer registro de cada mes
   CRUCE_FLAG AS (
           SELECT
           A.*,
           E.FECHA_FLAG_N_R,
           E.FLAG_N_R AS FLAG_N_R_FINAL,
-          -- DEFINE EL AHA_MOMENT CONTANDO LAS FECHAS ENTRE FIRST_DS_USER Y FIRST_DS_USER+30 PARTICIONANDO POR SIT_STE_ID Y USER_ID
+        -- Se define el AHA_MOMENT realizando un conteo de fechas distintas donde se haya visualizado entre la primer fecha de visualización del usuario y 30 días despues
         COUNT(DISTINCT CASE WHEN DS BETWEEN FIRST_DS_USER AND FIRST_DS_USER+30 
                             THEN DS ELSE NULL END) OVER (PARTITION BY A.SIT_SITE_ID,A.USER_ID) AS DS_AHA_MOMENT
                                                 
@@ -51,9 +51,8 @@ WITH NEW_RET_RECO AS
                                                 AND E.USER_ID = A.USER_ID
                                                 AND E.TIME_FRAME_ID = A.TIME_FRAME_ID
   ),
-  -- SUBCONSULTA PARA TRAER A PARTIR DE CRUCE_FLAG DISTINTAS METRICAS POR TV, MOBILE, DESKTOP
+  -- Con RESUMEN_USER_TF se agrupan los datos por SIT_SITE_ID, USER_ID y TIME_FRAME_ID, sumando el tiempo de reproducción en minutos y separando por plataforma
   RESUMEN_USER_TF AS (
-
         SELECT
         SIT_SITE_ID,
         USER_ID,
@@ -68,28 +67,27 @@ WITH NEW_RET_RECO AS
                    PLAYBACK_TIME_MILLISECONDS/60000 ELSE 0 END) AS TOTAL_MOBILE,
         SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%DESK%' THEN 
                    PLAYBACK_TIME_MILLISECONDS/60000 ELSE 0 END) AS TOTAL_DESKTOP,
-
-
         FROM CRUCE_FLAG
         GROUP BY ALL
 
   )
+  -- Esta es la consulta final que selecciona los datos agrupados de RESUMEN_USER_TF
   SELECT
   A.TIME_FRAME_ID,
   A.FLAG_N_R_FINAL,
   A.SIT_SITE_ID,
-  -- TRAE VALORES NOT_LOG O LOG DEPENDIENDO SI HAY USER_ID
+-- Se clasifica segun si el usuario se logueo o no
   case when safe_cast(A.user_id as int64)is null then 'not_log' else 'log' end as flag_user,
-  -- CREA LA COLUMNA PLATFORM_CONCAT CONCATENANDO SI HAY VALORES POR DEVICE
+  -- En este concat se genera una cadena que indica las plataformas en las que el usuario ha reproducido contenido
   CONCAT( CASE WHEN A.TOTAL_TV > 0 THEN 'SMART' ELSE '' END ,' - ',
   CASE WHEN A.TOTAL_MOBILE > 0 THEN 'MOBILE' ELSE '' END ,' - ',
   CASE WHEN A.TOTAL_DESKTOP > 0 THEN 'DESKTOP' ELSE '' END ) AS PLATFORM_CONCAT,
-  -- CLASIFICA POR EL PERIODO DE TIEMPO CONSUMIDO
+-- Se genera una nueva clasificacion según el total de tiempo reproducido
         CASE WHEN A.TVM_TOTAL_TIMEFRAME < 3 THEN 'A. MENOR A 3 MIN'
               WHEN A.TVM_TOTAL_TIMEFRAME  BETWEEN 3 AND 10 THEN 'B. ENTRE 3 Y 10 MIN'
               WHEN A.TVM_TOTAL_TIMEFRAME  BETWEEN 10 AND 30 THEN 'C. ENTRE 10 Y 30 MIN'              
               ELSE 'D. MAYOR A 30 MIN' END AS RANGE_TVM_TIMEFRAME,
--- CLASIFICA SI HAY AHA_MOMENT O NO
+-- Si vio mas de 3 dias distintos en el periodo de 30 dias se flaguea como AHA_MOMENT sino no
 CASE WHEN A.DS_AHA_MOMENT >= 3 THEN 'AHA_MOMENT' ELSE 'NOT_AHA' END AS FLAG_AHA_MOMENT,
   COUNT(DISTINCT A.USER_ID) AS TOTAL_USERS,
 
