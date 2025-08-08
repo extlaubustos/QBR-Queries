@@ -1,0 +1,195 @@
+WITH USER_MONTHS AS (
+        SELECT 
+        SN.SIT_SITE_ID,
+        SN.USER_ID,
+        UM.TYPE_USER,
+        UM.SEGMENT_LIFE_CYCLE,
+        UM.BUYER_CATEGORY,
+        case when date_diff(current_date,UM.LAST_PLAY_DATE,month) <= 6 then date_diff(current_date,UM.LAST_PLAY_DATE,month) else 7 end as AGING_MONTHS,  
+date_diff(current_date(),UM.FIRST_PLAY_DATE,month) as edad_en_play,
+date_diff(current_date(),case when UM.FIRST_PLAY_DATE <= date'2024-08-01' 
+                              then date'2024-08-01' 
+                              else UM.FIRST_PLAY_DATE end
+                         ,month) as total_meses_posible_Actividad,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'HIGH%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_HIGH,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'MED%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_MED,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'LOW%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_LOW                                                          
+        FROM `meli-sbox.MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT` AS SN
+            INNER JOIN  `meli-sbox.MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT` as UM  ON UM.SIT_SITE_ID = sn.SIT_SITE_ID
+                                                                                   AND UM.USER_ID = sn.USER_ID
+                                                                                   AND SN.SNAPSHOT_DATE >= UM.FIRST_PLAY_DATE
+                                                                                   AND UM.FIRST_PLAY_DATE <= date'2025-06-30'
+
+        WHERE SN.SNAPSHOT_DATE <= DATE'2025-06-30'
+        GROUP BY ALL
+)
+
+
+SELECT DISTINCT
+    SEGMENT_LIFE_CYCLE,
+    MIN(SCORE_ENG) OVER(PARTITION BY SEGMENT_LIFE_CYCLE) AS MIN_SCORE,
+    AVG(SCORE_ENG) OVER(PARTITION BY SEGMENT_LIFE_CYCLE) AS AVG_SCORE,
+    MAX(SCORE_ENG) OVER(PARTITION BY SEGMENT_LIFE_CYCLE) AS MAX_SCORE,
+    -- Esto es clave para definir umbrales --
+    PERCENTILE_CONT(SCORE_ENG, 0.25) OVER(PARTITION BY SEGMENT_LIFE_CYCLE) AS PERCENTIL_25,
+    PERCENTILE_CONT(SCORE_ENG, 0.50) OVER(PARTITION BY SEGMENT_LIFE_CYCLE) AS MEDIANA,
+    PERCENTILE_CONT(SCORE_ENG, 0.75) OVER(PARTITION BY SEGMENT_LIFE_CYCLE) AS PERCENTIL_75
+FROM (
+      (SELECT 
+      *,
+      safe_divide((TOTAL_HIGH*3+TOTAL_MED*2+TOTAL_LOW*1),(TOTAL_MESES_POSIBLE_ACTIVIDAD*3)) AS SCORE_ENG
+      FROM USER_MONTHS ))
+
+
+
+
+------------------------------------------------------------------
+with USER_MONTHS AS (
+        SELECT 
+        SN.SIT_SITE_ID,
+        SN.USER_ID,
+        UM.TYPE_USER,
+        UM.SEGMENT_LIFE_CYCLE,
+        UM.BUYER_CATEGORY,
+        case when date_diff(current_date,UM.LAST_PLAY_DATE,month) <= 6 then date_diff(current_date,UM.LAST_PLAY_DATE,month) else 7 end as AGING_MONTHS,  
+date_diff(current_date(),UM.FIRST_PLAY_DATE,month) as edad_en_play,
+date_diff(current_date(),case when UM.FIRST_PLAY_DATE <= date'2024-08-01' 
+                              then date'2024-08-01' 
+                              else UM.FIRST_PLAY_DATE end
+                         ,month) as total_meses_posible_Actividad,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'HIGH%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_HIGH,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'MED%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_MED,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'LOW%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_LOW                                                          
+        FROM `meli-sbox.MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT` AS SN
+            INNER JOIN  `meli-sbox.MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT` as UM  ON UM.SIT_SITE_ID = sn.SIT_SITE_ID
+                                                                                   AND UM.USER_ID = sn.USER_ID
+                                                                                   AND SN.SNAPSHOT_DATE >= UM.FIRST_PLAY_DATE
+                                                                                   AND UM.FIRST_PLAY_DATE <= date'2025-06-30'
+
+        WHERE SN.SNAPSHOT_DATE <= DATE'2025-06-30'
+        GROUP BY ALL
+)
+
+
+SELECT 
+SIT_SITE_ID,
+TYPE_USER,
+SEGMENT_LIFE_CYCLE,
+BUYER_CATEGORY,
+AGING_MONTHS,
+EDAD_EN_PLAY,
+CASE WHEN SCORE_ENG >= 0.35 THEN 'A_HIGH_ENG'
+     WHEN SCORE_ENG >= 0.20 AND SCORE_ENG < 0.35 THEN 'B_MEDIUM_ENG'
+     ELSE 'C_LOW_ENG' END AS CALIDAD_ABSOLUTA,
+COUNT(DISTINCT USER_ID) AS TOTAL_USERS,
+FROM (
+      (SELECT 
+      *,
+      safe_divide((TOTAL_HIGH*3+TOTAL_MED*2+TOTAL_LOW*1),(TOTAL_MESES_POSIBLE_ACTIVIDAD*3)) AS SCORE_ENG
+      FROM USER_MONTHS ))
+GROUP BY ALL 
+    
+-------------------------------------------------------------------------------
+WITH NEW_RET_RECO AS
+  (
+    SELECT 
+        *
+      , DATE_TRUNC(DS,MONTH) AS TIME_FRAME_ID --> ACA SOLAMENTE ELEGIMOS EL TIMEFRAME QUE SE QUIERE VER, WEEK,MONTH,DAY 
+      , LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) AS DS_ANT 
+      , (CASE WHEN (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)) IS NULL THEN 'NEW' 
+              WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) <= 30 THEN 'RETAINED'
+              WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) > 30  THEN 'RECOVERED'
+              ELSE NULL END) AS FLAG_N_R,
+     MIN(DS) OVER (PARTITION BY SIT_SITE_ID,USER_ID) AS FIRST_DS_USER
+
+
+    FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`
+
+    WHERE  PLAYBACK_TIME_MILLISECONDS/1000 >= 20 
+      AND DS <= CURRENT_DATE-1
+  ),
+  RECOVER_LAST_4_MONTHS AS (
+
+          SELECT 
+          SIT_SITE_ID,
+          USER_ID,
+          FLAG_N_R,
+          DS AS RECOVER_DATE,
+          DATE_DIFF(DS,DS_ANT,MONTH) AS AGING_RECOVER
+          FROM NEW_RET_RECO
+          WHERE FLAG_N_R = 'RECOVERED'
+          AND DS BETWEEN CURRENT_DATE-120 AND CURRENT_DATE-1
+          QUALIFY ROW_NUMBER()  OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) =  1 --> ME QUEDO CON EL PRIMER PLAY DEL TIMEFRAME PARA ATRIBUIR 1 
+  ),
+
+PRE_RECOVERY_STATUS AS (
+    SELECT
+    UM.SIT_SITE_ID,
+    UM.USER_ID,
+    SN.SEGMENT_LIFE_CYCLE AS LAST_SEGMENT_BEFORE_RECOVERY
+    FROM RECOVER_LAST_4_MONTHS AS UM
+
+        INNER JOIN `meli-sbox.MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT` AS SN  ON UM.SIT_SITE_ID = SN.SIT_SITE_ID AND UM.USER_ID = SN.USER_ID
+
+    WHERE SN.SNAPSHOT_DATE < UM.RECOVER_DATE
+
+    QUALIFY ROW_NUMBER() OVER(PARTITION BY UM.SIT_SITE_ID, UM.USER_ID ORDER BY SN.SNAPSHOT_DATE DESC) = 1
+),
+
+USER_MONTHS AS (
+        SELECT 
+        SN.SIT_SITE_ID,
+        SN.USER_ID,
+        PS.LAST_SEGMENT_BEFORE_RECOVERY,
+        UM.AGING_RECOVER,
+date_diff(RECOVER_DATE,case when SN.FIRST_PLAY_DATE <= date'2024-08-01' 
+                              then date'2024-08-01' 
+                              else SN.FIRST_PLAY_DATE end,month) as total_meses_posible_Actividad,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'HIGH%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_HIGH,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'MED%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_MED,
+        COUNT(DISTINCT CASE WHEN (SN.SEGMENT_LIFE_CYCLE LIKE '%RETENT%' OR SN.SEGMENT_LIFE_CYCLE LIKE '%EARLY%') 
+                             AND  SN.TYPE_USER LIKE 'LOW%' 
+                             THEN SN.SNAPSHOT_DATE ELSE NULL END) AS TOTAL_LOW                                                          
+        FROM `meli-sbox.MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT` AS SN
+            INNER JOIN  RECOVER_LAST_4_MONTHS as UM  ON UM.SIT_SITE_ID = sn.SIT_SITE_ID
+                                                    AND UM.USER_ID = sn.USER_ID
+                                                    AND SN.SNAPSHOT_DATE < UM.RECOVER_DATE
+            LEFT JOIN PRE_RECOVERY_STATUS AS PS ON PS.SIT_SITE_ID = UM.SIT_SITE_ID
+                                               AND PS.USER_ID = UM.USER_ID                                                    
+
+        WHERE SN.SNAPSHOT_DATE <= DATE'2025-06-30'
+        GROUP BY ALL
+)
+
+
+SELECT 
+SIT_SITE_ID,
+AGING_RECOVER,
+LAST_SEGMENT_BEFORE_RECOVERY,   
+CASE WHEN SCORE_ENG >= 0.35 THEN 'A_HIGH_ENG'
+     WHEN SCORE_ENG >= 0.20 AND SCORE_ENG < 0.35 THEN 'B_MEDIUM_ENG'
+     ELSE 'C_LOW_ENG' END AS CALIDAD_ABSOLUTA,
+COUNT(DISTINCT USER_ID) AS TOTAL_USERS,
+FROM (
+      (SELECT 
+      *,
+      safe_divide((TOTAL_HIGH*3+TOTAL_MED*2+TOTAL_LOW*1),(TOTAL_MESES_POSIBLE_ACTIVIDAD*3)) AS SCORE_ENG
+      FROM USER_MONTHS ))
+GROUP BY ALL 
+    
