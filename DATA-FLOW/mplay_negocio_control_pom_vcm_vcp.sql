@@ -1,4 +1,4 @@
--- Crea o reemplaza una tabla temporal en el sANDbox de MPLAY llamada MPLAY_NEGOCIO_CONTROL_POM_VCM_VCP_STAGE
+-- Crea o reemplaza una tabla temporal en el sandbox de MPLAY llamada MPLAY_NEGOCIO_CONTROL_POM_VCM_VCP_STAGE
 CREATE OR REPLACE TABLE `meli-sbox.MPLAY.MPLAY_NEGOCIO_CONTROL_POM_VCM_VCP_STAGE` AS (
 -- Con esta CTE vamos a traer todo el trafico que provenga de MATT siempre y cuando sea de MERCADO PLAY
 WITH trafico_matt AS  ( 
