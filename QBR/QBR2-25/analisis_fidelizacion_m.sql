@@ -5,12 +5,15 @@
 -- `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`: tabla de control de torre
 -- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
 
--- Declaro la variable definiendo el mes por el que vamos a iniciar el analisis
-DECLARE start_month DATE DEFAULT DATE '2025-01-01';
--- Defino la cantidad de meses que vamos a analizar hacia adelante
-DECLARE months_to_analyze INT64 DEFAULT 7;
--- En esta variable definimos la cantidad de clasificaciones M que vamos a generar
-DECLARE m_limit INT64 DEFAULT 2;
+-- Primer día del mes inicial: hace 12 meses desde el mes actual
+DECLARE start_month DATE DEFAULT DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH), MONTH);
+
+-- Siempre analizamos 12 meses
+DECLARE months_to_analyze INT64 DEFAULT 12;
+
+-- Límite de clasificación M
+DECLARE m_limit INT64 DEFAULT 12; -- o el valor que necesites
+
 -- Con esta variable comenzaremos a iterar
 DECLARE i INT64 DEFAULT 0;
 
