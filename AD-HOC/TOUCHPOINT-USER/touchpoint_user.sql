@@ -88,11 +88,15 @@ SELECT
     WHEN S.DEVICE_PLATFORM IN ('/tv/Web0S') THEN '/tv/Web0S'
     ELSE COALESCE(o.SOURCE_TYPE,'Otros')
     END AS Origin,
-    US.FLAG_N_R_FINAL,
+  US.FLAG_N_R_FINAL,
+  CONCAT(o.SOURCE_SESSION_L1,'-', o.SOURCE_SESSION_L2, '-', o.TEAM) AS touchpoint,
+  o.SOURCE_SESSION_L1 AS Clasificacion,
+  o.SOURCE_SESSION_L2 AS Clasificacion_2,
+  o.TEAM AS Team,
   COUNT(DISTINCT s.melidata_session_id) Sessions,
   COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) as Sessions_valid_visit,
   COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.melidata_session_id ELSE NULL END) as Sessions_valid_view,
-  SUM(s.TVM) as TVM,
+  ROUND(SUM(s.TVM), 2) as TVM,
   COUNT(DISTINCT s.USER_ID) Visitors,
   COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) as Valid_Visitors,
   COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) as Viewers,
