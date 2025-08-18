@@ -5,10 +5,10 @@
 -- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
 
 -- Se declara la variable la cual será mi mes base para el análisis
-DECLARE start_month DATE DEFAULT DATE '2025-01-01';
+DECLARE start_month DATE DEFAULT DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH), MONTH);
 -- Se definen la cantidad de meses que vamos a analizar hacia adelante
-DECLARE months_to_analyze INT64 DEFAULT 7;       
--- Esta i sera la variable que se usará para iterar
+DECLARE months_to_analyze INT64 DEFAULT 12;      
+-- Esta i será la variable que se usará para iterar
 DECLARE i INT64 DEFAULT 0;
 
 -- Se declaran las variables para el mes base y los 11 meses posteriores
