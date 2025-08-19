@@ -3,7 +3,7 @@ DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;
 DECLARE date_to DATE;
 
-SET SITES = ['MLC', 'MLA', 'MLB', 'MLM', 'MCO', 'MPE', 'MLU', 'MEC'];
+SET SITES = ['MLA', 'MLB', 'MLM'];
 SET date_from = '2025-08-01';
 SET date_to = CURRENT_DATE();
 
