@@ -302,7 +302,7 @@ BEGIN
     GROUP BY SIT_SITE_ID
     """,
     -- Se pasan como parámetros las fechas del mes base y los meses posteriores
-    FORMAT_DATE('%Y-%m', base_month_start),
+    FORMAT_DATE('%Y-%m-%d', base_month_start),
     FORMAT_DATE('%F', base_month_start), FORMAT_DATE('%F', base_month_end),
     FORMAT_DATE('%F', post_month_1_start), FORMAT_DATE('%F', post_month_1_end),
     FORMAT_DATE('%F', post_month_2_start), FORMAT_DATE('%F', post_month_2_end),
