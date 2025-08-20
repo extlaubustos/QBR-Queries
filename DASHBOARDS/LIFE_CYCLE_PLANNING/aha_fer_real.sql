@@ -1,0 +1,191 @@
+-- LCM_AHA_CRITERIO_AMPLIADO
+
+CREATE OR REPLACE TABLE `EXPLOTACION.BASE_AHA_MOMENT_TV` AS
+WITH
+SESSIONS AS
+(
+SELECT *,
+DATE_DIFF(DS, LAG(DS) OVER (PARTITION BY SIT_SITE_ID, CUS_CUST_ID ORDER BY DS), DAY) AS RECENCIA,
+DATE_DIFF(DS, LAG(DS, 2) OVER (PARTITION BY SIT_SITE_ID, CUS_CUST_ID ORDER BY DS), DAY) AS RECENCIA_2
+FROM
+(
+SELECT
+SIT_SITE_ID,
+CUS_CUST_ID,
+DATE(DS) AS DS,
+COUNT(DISTINCT SESSION_ID) AS SESSIONS,
+SUM(IFNULL(TOTAL_FEED_IMPRESSIONS,0)) AS IMPRESSIONS
+FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION` S
+WHERE 1=1
+AND SIT_SITE_ID IN ('MLB', 'MLM', 'MLA')
+AND CUS_CUST_ID IS NOT NULL
+GROUP BY 1, 2, 3
+)
+),
+PLAYS AS
+(
+SELECT *,
+DATE_DIFF(DS, LAG(DS) OVER (PARTITION BY SIT_SITE_ID, CUS_CUST_ID ORDER BY DS), DAY) AS RECENCIA,
+DATE_DIFF(DS, LAG(DS, 2) OVER (PARTITION BY SIT_SITE_ID, CUS_CUST_ID ORDER BY DS), DAY) AS RECENCIA_2,
+MIN(DS) OVER (PARTITION BY SIT_SITE_ID, CUS_CUST_ID) AS DIA_PRIMEIRO_PLAY
+FROM
+(
+SELECT  
+SIT_SITE_ID,
+CUS_CUST_ID,
+DATE(DS) AS DS,
+COUNT(DISTINCT PLAY_ID) AS PLAYS,
+SUM(IFNULL(PLAYBACK_TIME_MILLISECONDS/1000,0)) AS PLAY_TIME,
+CASE
+            WHEN UPPER(device_platform) = '/WEB/DESKTOP'    THEN 'DESKTOP'
+            WHEN UPPER(device_platform) = '/MOBILE/ANDROID' THEN 'MOBILE'
+            WHEN UPPER(device_platform) = '/MOBILE/IOS'     THEN 'MOBILE'
+            WHEN UPPER(device_platform) = '/WEB/MOBILE'     THEN 'MOBILE'
+            WHEN UPPER(device_platform) = '/TV/MACOS'       THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/MAC OS X'    THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/WEB0S'       THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/TIZEN'       THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/ANDROID'     THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV'             THEN 'SMART-TV'
+            WHEN UPPER(device_platform) IS NULL             THEN 'NULL'
+                                                           ELSE UPPER(device_platform)
+          END AS platform,
+          CASE
+            WHEN UPPER(device_platform) = '/WEB/DESKTOP'    THEN 'DESKTOP/MOBILE'
+            WHEN UPPER(device_platform) = '/MOBILE/ANDROID' THEN 'DESKTOP/MOBILE'
+            WHEN UPPER(device_platform) = '/MOBILE/IOS'     THEN 'DESKTOP/MOBILE'
+            WHEN UPPER(device_platform) = '/WEB/MOBILE'     THEN 'DESKTOP/MOBILE'
+            WHEN UPPER(device_platform) = '/TV/MACOS'       THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/MAC OS X'    THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/WEB0S'       THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/TIZEN'       THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV/ANDROID'     THEN 'SMART-TV'
+            WHEN UPPER(device_platform) = '/TV'             THEN 'SMART-TV'
+            WHEN UPPER(device_platform) IS NULL             THEN 'NULL'
+                                                           ELSE UPPER(device_platform)
+          END AS platform_agg,
+FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS` P
+WHERE 1=1
+AND SIT_SITE_ID IN ('MLB', 'MLM', 'MLA')
+AND P.PLAYBACK_TIME_MILLISECONDS >= 20000
+AND CUS_CUST_ID IS NOT NULL
+GROUP BY 1, 2, 3, 6, 7
+)
+),
+PARTIDA AS
+(
+SELECT DISTINCT SIT_SITE_ID, CUS_CUST_ID, DS
+FROM
+(
+SELECT DISTINCT SIT_SITE_ID, CUS_CUST_ID, DS FROM SESSIONS
+UNION ALL
+SELECT DISTINCT SIT_SITE_ID, CUS_CUST_ID, DS FROM PLAYS
+)
+),
+PRIMEIRO_CONTATO AS
+(
+SELECT
+SIT_SITE_ID,
+CUS_CUST_ID,
+MIN(DS) AS DATA_INI
+FROM PARTIDA
+WHERE 1=1
+GROUP BY 1, 2
+),
+DEVICE_DIA AS
+(
+SELECT
+SIT_SITE_ID,
+CUS_CUST_ID,
+DS,
+DATE_TRUNC(DS, MONTH) AS MES_PLAY,
+COUNTIF(platform_agg = 'SMART-TV') device_tv,
+COUNTIF(platform_agg = 'DESKTOP/MOBILE') device_desk_app
+FROM PLAYS
+WHERE 1=1
+GROUP BY ALL
+ORDER BY CUS_CUST_ID, DS ASC
+)
+SELECT
+SIT_SITE_ID,
+CUS_CUST_ID,
+MIN(DS) PRIMEIRO_PLAY_TV, --PRIMEIRO CONTATO COM TV
+FROM DEVICE_DIA
+WHERE 1=1
+AND device_tv > 0
+GROUP BY 1,2
+ORDER BY CUS_CUST_ID ASC;
+CREATE OR REPLACE TABLE EXPLOTACION.BASE_AHA_MOMENT_PLAY_REVISADA AS 
+#cust_ids que estão na tabela de AHA mas não estão na tabela de TV -----> nao altera nada
+#cust_ids que estão na tabela de AHA e também estão na tabela de TV, mas dia_primeiro_play_na_tv > dia_3_aha -----> nao altera nada
+#cust_ids que estão na tabela de AHA e também estão na tabela de TV, mas dia_primeiro_play_na_tv < dia_3_aha -----> vai passar a considerar dia_1, dia_2, dia_3 como a data da TV
+#cust_ids que não estão na tabela de AHA mas estão na tabela de TV -----> vai passar a considerar dia_1, dia_2, dia_3 como a data da TV
+-- AHA apenas
+WITH AHA_APENAS AS (
+SELECT
+  a.SIT_SITE_ID,
+  a.CUS_CUST_ID,
+  a.DIA_AHA_INI,
+  a.DIA_AHA_MEIO,
+  a.DIA_AHA_FIM,
+  'AHA PREVALECE' AS TIPO
+FROM `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_PLAY` a
+LEFT JOIN `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_TV` t
+  ON a.CUS_CUST_ID = t.CUS_CUST_ID AND a.SIT_SITE_ID = t.SIT_SITE_ID
+WHERE t.CUS_CUST_ID IS NULL
+),
+-- AHA prevalece
+AHA_PREVALECE AS (
+SELECT
+  a.SIT_SITE_ID,
+  a.CUS_CUST_ID,
+  a.DIA_AHA_INI,
+  a.DIA_AHA_MEIO,
+  a.DIA_AHA_FIM,
+  'AHA PREVALECE' AS TIPO
+FROM `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_PLAY` a
+JOIN `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_TV` t
+  ON a.CUS_CUST_ID = t.CUS_CUST_ID AND a.SIT_SITE_ID = t.SIT_SITE_ID
+WHERE t.PRIMEIRO_PLAY_TV >= a.DIA_AHA_FIM
+),
+-- TV sobrescreve AHA
+TV_AJUSTE AS (
+SELECT
+  a.SIT_SITE_ID,
+  a.CUS_CUST_ID,
+  t.PRIMEIRO_PLAY_TV AS DIA_AHA_INI,
+  t.PRIMEIRO_PLAY_TV AS DIA_AHA_MEIO,
+  t.PRIMEIRO_PLAY_TV AS DIA_AHA_FIM,
+  'NOVO AHA AJUSTADO' AS TIPO
+FROM `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_PLAY` a
+JOIN `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_TV` t
+  ON a.CUS_CUST_ID = t.CUS_CUST_ID AND a.SIT_SITE_ID = t.SIT_SITE_ID
+WHERE t.PRIMEIRO_PLAY_TV < a.DIA_AHA_FIM
+),
+-- TV apenas
+TV_APENAS AS (
+SELECT
+  t.SIT_SITE_ID,
+  t.CUS_CUST_ID,
+  t.PRIMEIRO_PLAY_TV AS DIA_AHA_INI,
+  t.PRIMEIRO_PLAY_TV AS DIA_AHA_MEIO,
+  t.PRIMEIRO_PLAY_TV AS DIA_AHA_FIM,
+  'NOVO AHA ADD' AS TIPO
+FROM `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_TV` t
+LEFT JOIN `meli-bi-data.SBOX_MELIIAM.BASE_AHA_MOMENT_PLAY` a
+  ON a.CUS_CUST_ID = t.CUS_CUST_ID AND a.SIT_SITE_ID = t.SIT_SITE_ID
+WHERE a.CUS_CUST_ID IS NULL
+)
+-- BASE FINAL COM AS PREMISSAS
+SELECT *
+FROM (
+ 
+  (SELECT * FROM AHA_APENAS ) 
+  UNION ALL
+  (SELECT * FROM AHA_PREVALECE ) 
+  UNION ALL
+  (SELECT * FROM TV_AJUSTE )
+  UNION ALL
+  (SELECT * FROM TV_APENAS ) 
+) 
+GROUP BY ALL ;
