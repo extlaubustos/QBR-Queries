@@ -1,0 +1,1 @@
+select * from `meli-sbox.MPLAY.MPLAY_NEGOCIO_ADQUITSTION_METRICS` 
