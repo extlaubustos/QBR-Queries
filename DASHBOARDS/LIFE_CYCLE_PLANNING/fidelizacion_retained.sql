@@ -4,11 +4,13 @@
 -- TABLAS --
 -- `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`: tabla de control de torre
 -- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
-
+BEGIN
 -- Se declara la variable la cual será mi mes base para el análisis
-DECLARE END_MONTH DATE DEFAULT DATE '2025-01-01';
+DECLARE END_MONTH DATE DEFAULT DATE_TRUNC(CURRENT_DATE(), MONTH);
+
+
 -- Se definen la cantidad de meses que vamos a analizar hacia atras
-DECLARE months_to_analyze INT64 DEFAULT 7;       
+DECLARE months_to_analyze INT64 DEFAULT 12;       
 -- Esta i sera la variable que se usará para iterar
 DECLARE i INT64 DEFAULT 0;
 
@@ -70,21 +72,21 @@ CREATE TEMP TABLE retained_summary (
 -- Se comienza el ciclo de iteración
 WHILE i < months_to_analyze DO
   -- Primero se calculan el mes base y los meses previos
-  SET base_month = DATE_ADD(END_MONTH, INTERVAL i MONTH);
-  SET prev_month_1 = DATE_ADD(base_month, INTERVAL 1 MONTH);
-  SET prev_month_2 = DATE_ADD(base_month, INTERVAL 2 MONTH);
-  SET prev_month_3 = DATE_ADD(base_month, INTERVAL 3 MONTH);
-  SET prev_month_4 = DATE_ADD(base_month, INTERVAL 4 MONTH);
-  SET prev_month_5 = DATE_ADD(base_month, INTERVAL 5 MONTH);
-  SET prev_month_6 = DATE_ADD(base_month, INTERVAL 6 MONTH);
-   SET prev_month_7 = DATE_ADD(base_month, INTERVAL 7 MONTH);
-  SET prev_month_8 = DATE_ADD(base_month, INTERVAL 8 MONTH);
-  SET prev_month_9 = DATE_ADD(base_month, INTERVAL 9 MONTH);
-  SET prev_month_10 = DATE_ADD(base_month, INTERVAL 10 MONTH);
-  SET prev_month_11 = DATE_ADD(base_month, INTERVAL 11 MONTH); 
+  SET base_month = DATE_SUB(END_MONTH, INTERVAL i MONTH);
+  SET prev_month_1 = DATE_SUB(base_month, INTERVAL 1 MONTH);
+  SET prev_month_2 = DATE_SUB(base_month, INTERVAL 2 MONTH);
+  SET prev_month_3 = DATE_SUB(base_month, INTERVAL 3 MONTH);
+  SET prev_month_4 = DATE_SUB(base_month, INTERVAL 4 MONTH);
+  SET prev_month_5 = DATE_SUB(base_month, INTERVAL 5 MONTH);
+  SET prev_month_6 = DATE_SUB(base_month, INTERVAL 6 MONTH);
+   SET prev_month_7 = DATE_SUB(base_month, INTERVAL 7 MONTH);
+  SET prev_month_8 = DATE_SUB(base_month, INTERVAL 8 MONTH);
+  SET prev_month_9 = DATE_SUB(base_month, INTERVAL 9 MONTH);
+  SET prev_month_10 = DATE_SUB(base_month, INTERVAL 10 MONTH);
+  SET prev_month_11 = DATE_SUB(base_month, INTERVAL 11 MONTH); 
 -- A partir de acá se definen las fechas de inicio y fin de cada mes
   SET base_month_start = DATE_TRUNC(base_month, MONTH);
-  SET base_month_end = DATE_SUB(DATE_ADD(base_month_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
+  SET base_month_end = DATE_SUB(DATE_ADD(DATE_TRUNC(base_month, MONTH), INTERVAL 1 MONTH), INTERVAL 1 DAY);
 
   SET prev_month_1_start = DATE_TRUNC(prev_month_1, MONTH);
   SET prev_month_1_end = DATE_SUB(DATE_ADD(prev_month_1_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
@@ -151,7 +153,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -159,7 +161,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -167,7 +169,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -175,7 +177,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -183,7 +185,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -191,7 +193,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -199,7 +201,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -207,7 +209,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -215,7 +217,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -223,7 +225,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -231,7 +233,7 @@ EXECUTE IMMEDIATE FORMAT("""
       SELECT SIT_SITE_ID, USER_ID
       FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
       WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RETAINED'
+        -- AND LIFE_CYCLE = 'RETAINED'
         AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
       GROUP BY SIT_SITE_ID, USER_ID
     ),
@@ -323,8 +325,9 @@ EXECUTE IMMEDIATE FORMAT("""
 END WHILE;
 
 -- Mostramos los resultados finales de la tabla temporal
-SELECT * 
-FROM retained_summary 
-ORDER BY base_month 
-DESC, sit_site_id;
+CREATE OR REPLACE TABLE `EXPLOTACION.FIDELIZACION_RETAINED` AS
+  SELECT * FROM retained_summary 
+  ORDER BY base_month 
+  DESC, sit_site_id;
 
+END;
