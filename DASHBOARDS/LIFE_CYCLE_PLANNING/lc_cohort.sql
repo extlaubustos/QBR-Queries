@@ -100,7 +100,41 @@ TABLE_CALENDAR AS (
 ),
 
 -- =========================================
--- 5) Usuarios con calendario y atribuciones de plataforma
+-- 4.5) Channel attribution
+-- =========================================
+MATT_TOTAL_CHANNEL_MONTH AS (
+    SELECT
+        M.SIT_SITE_ID,
+        COALESCE(c.user_id, S.USER_ID) AS USER_ID,
+        DATE_TRUNC(CONVERSION_CREATED_DATE, MONTH) AS MONTH_ID,
+        CASE
+            WHEN (MATT_PLAYER IS NOT NULL AND MATT_PLAYER != '')
+                THEN MATT_PLAYER
+            ELSE MATT_TYPE_SOURCE
+        END AS CHANNEL,
+        ROUND(SUM(MATT_PORC_LAST_CLICK/100.0)) AS SUM_MATT
+    FROM `growth-attribution.production.BT_MATT_FINE_TUNED_MERCADOPLAY` AS M
+    LEFT JOIN `meli-bi-data.WHOWNER.LK_MPLAY_FIRST_PLAY` AS C
+        ON C.first_play_hash_id = M.CONVERSION_ID
+        AND M.CONVERSION_CREATED_DATE <= DATE'2024-10-31'
+    LEFT JOIN `meli-bi-data.WHOWNER.LK_MPLAY_FIRST_SESSION` AS S
+        ON S.FIRST_SESSION_HASH_ID = M.CONVERSION_ID
+        AND M.CONVERSION_CREATED_DATE >= DATE'2024-11-01'
+    GROUP BY ALL
+),
+
+TOTAL_X_USER AS (
+    SELECT
+        M.SIT_SITE_ID,
+        M.USER_ID,
+        M.MONTH_ID,
+        M.CHANNEL,
+        M.SUM_MATT / SUM(SUM_MATT) OVER (PARTITION BY M.SIT_SITE_ID, M.USER_ID, M.MONTH_ID) AS ATTR_USER
+    FROM MATT_TOTAL_CHANNEL_MONTH AS M
+),
+
+-- =========================================
+-- 5) Usuarios con calendario, atribuciones de plataforma y canal
 -- =========================================
 USERS_CALENDAR AS (
     SELECT
@@ -108,7 +142,8 @@ USERS_CALENDAR AS (
         T.FECHA_INI,
         T.FECHA_FIN,
         T.MONTH_NUMBER,
-        P.PLATFORM_CONCAT
+        P.PLATFORM_CONCAT,
+        COALESCE(TXU.CHANNEL, 'NO_ATTR') AS CHANNEL
     FROM PLAY_FIRST_DAY PF
     LEFT JOIN TABLE_CALENDAR T
         ON PF.FIRST_DAY = T.FECHA_COHORT
@@ -116,10 +151,14 @@ USERS_CALENDAR AS (
         ON PF.SIT_SITE_ID = P.SIT_SITE_ID
         AND PF.USER_ID = P.USER_ID
         AND DATE_TRUNC(PF.FIRST_DAY, MONTH) = P.MONTH_ID
+    LEFT JOIN TOTAL_X_USER TXU
+        ON PF.SIT_SITE_ID = TXU.SIT_SITE_ID
+        AND PF.USER_ID = TXU.USER_ID
+        AND DATE_TRUNC(PF.FIRST_DAY, MONTH) = TXU.MONTH_ID
 ),
 
 -- =========================================
--- 6) Base con métricas por cohorte
+-- 6) Base con métricas por cohorte y canal
 -- =========================================
 BASE AS (
     SELECT
@@ -129,23 +168,25 @@ BASE AS (
         DATE_TRUNC(U.FIRST_DAY, MONTH) AS MONTH_COHORT_ACQ,
         SUM(P.PLAYBACK_TIME) AS TVM,
         CASE WHEN SUM(P.PLAYBACK_TIME) > 0 THEN 1 ELSE 0 END AS FLAG_TVM,
-        U.PLATFORM_CONCAT
+        U.PLATFORM_CONCAT,
+        U.CHANNEL
     FROM USERS_CALENDAR U
     LEFT JOIN PLAY_DAYS P
         ON U.USER_ID = P.USER_ID
         AND U.SIT_SITE_ID = P.SIT_SITE_ID
         AND P.DAY_PLAY BETWEEN U.FECHA_INI AND U.FECHA_FIN
-    GROUP BY U.SIT_SITE_ID, U.USER_ID, U.MONTH_NUMBER, U.FIRST_DAY, U.PLATFORM_CONCAT
+    GROUP BY U.SIT_SITE_ID, U.USER_ID, U.MONTH_NUMBER, U.FIRST_DAY, U.PLATFORM_CONCAT, U.CHANNEL
 )
 
 -- =========================================
--- 7) Query final con cohorte + plataforma
+-- 7) Query final con cohorte + plataforma + canal
 -- =========================================
 SELECT
     SIT_SITE_ID,
     MONTH_COHORT_ACQ,
     MONTH_NUMBER - 1 AS MONTH_RETENTION,
     PLATFORM_CONCAT AS PLATFORM,
+    CHANNEL,
     COUNT(DISTINCT USER_ID || SIT_SITE_ID) AS TOTAL_USERS_COHORT,
     COUNT(DISTINCT CASE WHEN TVM > 0 THEN USER_ID || SIT_SITE_ID ELSE NULL END) AS TOTAL_USERS_RETENTION,
     SUM(TVM) AS TVM,
@@ -153,5 +194,5 @@ SELECT
     SUM(CASE WHEN TVM > 0 AND FLAG_TVM = 1 THEN TVM ELSE NULL END) AS ALL_MONTH_TVM
 FROM BASE
 WHERE MONTH_NUMBER IS NOT NULL
-GROUP BY SIT_SITE_ID, MONTH_COHORT_ACQ, MONTH_NUMBER, PLATFORM_CONCAT
-ORDER BY MONTH_COHORT_ACQ, MONTH_RETENTION, PLATFORM;
+GROUP BY SIT_SITE_ID, MONTH_COHORT_ACQ, MONTH_NUMBER, PLATFORM_CONCAT, CHANNEL
+ORDER BY MONTH_COHORT_ACQ, MONTH_RETENTION, PLATFORM, CHANNEL;
