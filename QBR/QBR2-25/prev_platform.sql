@@ -1,14 +1,6 @@
--- PLATAFORMA PREVIA --
--- Esta query se utiliza para analizar la plataforma previa de los usuarios, su life_cycle anterior y tambien poder hacer la comparacion de ese rango de usuarios para ver como se comportan en el mes actual. Son solo usuarios SMART.
--- TABLAS --
--- `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`: tabla de reproducciones de Play
+DECLARE mes_inicial DATE DEFAULT DATE '2025-08-01';
+DECLARE meses_hacia_atras INT64 DEFAULT 6;
 
-
-
--- Se declara el mes inicial desde donde va a empezar el analisis y la cantidad de meses hacia atrás que se va a analizar
-DECLARE mes_inicial DATE DEFAULT DATE '2025-07-01';
-DECLARE meses_hacia_atras INT64 DEFAULT 5;
--- En la CTE MESES_ANALISIS generamos un array de meses desde el mes inicial hacia atras
 WITH MESES_ANALISIS AS (
   SELECT month_id
   FROM UNNEST(
@@ -19,15 +11,12 @@ WITH MESES_ANALISIS AS (
     )
   ) AS month_id
 ),
--- En esta CTE se clasifican a los usuarios en NEW, RETAINED o RECOVERED
+
 NEW_RET_RECO AS (
   SELECT
     *,
-    -- Se toma el mes truncado de la fecha DS para definir el TIME_FRAME_ID
     DATE_TRUNC(DS, MONTH) AS TIME_FRAME_ID,
-    -- Con este LAG se obtiene la fecha del día anterior al actual, particionando por SIT_SITE_ID y USER_ID
     LAG(DS) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) AS DS_ANT,
-    -- En este CASE se define el FLAG_N_R, que puede ser NEW, RETAINED o RECOVERED dependiendo de la diferencia de días entre DS y DS_ANT
     CASE
       WHEN LAG(DS) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) IS NULL THEN 'NEW'
       WHEN DATE_DIFF(DS, LAG(DS) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC), DAY) <= 30 THEN 'RETAINED'
@@ -37,7 +26,7 @@ NEW_RET_RECO AS (
   WHERE PLAYBACK_TIME_MILLISECONDS / 1000 >= 20
     AND DS <= CURRENT_DATE() - 1
 ),
-  -- La CTE ATTR_TIME_FRAME_ELEGIDO selecciona el primer registro de cada mes para cada usuario, manteniendo el FLAG_N_R
+
 ATTR_TIME_FRAME_ELEGIDO AS (
   SELECT
     SIT_SITE_ID,
@@ -47,7 +36,7 @@ ATTR_TIME_FRAME_ELEGIDO AS (
   FROM NEW_RET_RECO
   QUALIFY ROW_NUMBER() OVER (PARTITION BY SIT_SITE_ID, USER_ID, TIME_FRAME_ID ORDER BY START_PLAY_TIMESTAMP ASC) = 1
 ),
-  -- Se realiza un cruce entre NEW_RET_RECO y ATTR_TIME_FRAME_ELEGIDO para obtener el FLAG_N_R final teniendo en cuenta el primer registro de cada mes
+
 CRUCE_FLAG AS (
   SELECT
     A.*,
@@ -58,7 +47,7 @@ CRUCE_FLAG AS (
     AND E.USER_ID = A.USER_ID
     AND E.TIME_FRAME_ID = A.TIME_FRAME_ID
 ),
-  -- Con RESUMEN_USER_TF se agrupan los datos por SIT_SITE_ID, USER_ID y TIME_FRAME_ID, sumando el tiempo de reproducción en minutos y separando por plataforma. Tambien se calcula el total de tiempo de reproduccion casteado
+
 RESUMEN_USER_TF AS (
   SELECT
     SIT_SITE_ID,
@@ -69,18 +58,20 @@ RESUMEN_USER_TF AS (
     SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%TV%' THEN PLAYBACK_TIME_MILLISECONDS / 60000 ELSE 0 END) AS TOTAL_TV,
     SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%MOBILE%' THEN PLAYBACK_TIME_MILLISECONDS / 60000 ELSE 0 END) AS TOTAL_MOBILE,
     SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%DESK%' THEN PLAYBACK_TIME_MILLISECONDS / 60000 ELSE 0 END) AS TOTAL_DESKTOP,
-    SUM(PLAYBACK_TIME_MILLISECONDS_CAST / 60000) AS TOTAL_CAST
+    SUM(CASE WHEN PLAYBACK_TIME_MILLISECONDS_CAST/1000 >= 20 THEN PLAYBACK_TIME_MILLISECONDS_CAST/60000 ELSE 0 END) AS TOTAL_CAST
   FROM CRUCE_FLAG
   GROUP BY 1, 2, 3, 4
 ),
--- Esta CTE filtra los usuarios que han reproducido contenido en la plataforma SMART
+
 USERS_SMART AS (
   SELECT
     R.SIT_SITE_ID,
     R.USER_ID,
     R.TIME_FRAME_ID AS MONTH_ID,
     R.FLAG_N_R_FINAL AS LIFE_CYCLE_ACTUAL,
-    CONCAT(
+    CASE
+      WHEN ROUND(TVM_TOTAL_TIMEFRAME, 2) = ROUND(TOTAL_CAST, 2) AND TVM_CAST > 0 THEN'CAST'
+      ELSE CONCAT(
       CASE WHEN TOTAL_TV > 0 THEN 'SMART' ELSE '' END,
       CASE WHEN TOTAL_MOBILE > 0 THEN 'MOBILE' ELSE '' END,
       CASE WHEN TOTAL_DESKTOP > 0 THEN 'DESKTOP' ELSE '' END,
@@ -95,7 +86,7 @@ USERS_SMART AS (
       CASE WHEN TOTAL_CAST > 0 THEN 'CAST' ELSE '' END
     ) LIKE '%SMART%'
 ),
--- Esta CTE aquellos cuyo TIME_FRAME_ID es anterior al mes en analisis para definir aquellos usuarios que son RECOVERED
+
 PLATFORM_PREV_RECOVERED AS (
   SELECT
     A.USER_ID,
@@ -110,29 +101,29 @@ PLATFORM_PREV_RECOVERED AS (
     AND R.TIME_FRAME_ID < A.MONTH_ID
   GROUP BY 1, 2, 3, 4, 5 
 ),
--- Con esta CTE vamos a buscar la plataforma que vieron en el mes anterior los usuarios
+
 PLATFORM_PREV_MONTH AS (
   SELECT
     U.MONTH_ID,
     U.SIT_SITE_ID,
-    CONCAT(
-      CASE WHEN R.TOTAL_TV > 0 THEN 'SMART' ELSE '' END,
-      CASE WHEN R.TOTAL_MOBILE > 0 THEN 'MOBILE' ELSE '' END,
-      CASE WHEN R.TOTAL_DESKTOP > 0 THEN 'DESKTOP' ELSE '' END,
-      CASE WHEN R.TOTAL_CAST > 0 THEN 'CAST' ELSE '' END
+    CASE
+      WHEN ROUND(TVM_TOTAL_TIMEFRAME, 2) = ROUND(TOTAL_CAST, 2) AND TVM_CAST > 0 THEN'CAST'
+      ELSE CONCAT(
+      CASE WHEN TOTAL_TV > 0 THEN 'SMART' ELSE '' END,
+      CASE WHEN TOTAL_MOBILE > 0 THEN 'MOBILE' ELSE '' END,
+      CASE WHEN TOTAL_DESKTOP > 0 THEN 'DESKTOP' ELSE '' END,
+      CASE WHEN TOTAL_CAST > 0 THEN 'CAST' ELSE '' END
     ) AS PLATFORM_PREV,
     R.FLAG_N_R_FINAL AS LIFE_CYCLE_PREV,
     U.USER_ID,
     U.PLATFORM_ACTUAL,
     U.LIFE_CYCLE_ACTUAL,
     U.TIME_FRAME_ID_PREV
-  -- Unimos con PLATFORM_PREV_RECOVERED para obtener la plataforma previa de los usuarios que son RECOVERED
   FROM PLATFORM_PREV_RECOVERED U
-  -- Con el JOIN de RESUMEN_USER_TF obtenemos los datos del mes anterior del resto de usuarios
   JOIN RESUMEN_USER_TF R
     ON R.USER_ID = U.USER_ID AND R.SIT_SITE_ID = U.SIT_SITE_ID AND R.TIME_FRAME_ID = U.TIME_FRAME_ID_PREV
 ),
--- En USERS_NEW se traen aquellos usuarios que son NEW y no tienen plataforma previa, para luego unirlos con los datos del mes anterior
+
 USERS_NEW AS (
   SELECT
     U.MONTH_ID,
@@ -142,13 +133,11 @@ USERS_NEW AS (
     U.USER_ID,
     U.PLATFORM_ACTUAL,
     U.LIFE_CYCLE_ACTUAL,
-    -- Con este DATE_SUB se obtiene el mes anterior al mes actual
-    DATE_SUB(U.MONTH_ID, INTERVAL 1 MONTH) AS TIME_FRAME_ID_PREV
-    -- Se traen los usuarios que son NEW de los que son SMART
+    DATE_SUB(U.MONTH_ID, INTERVAL 1 MONTH) AS TIME_FRAME_ID_PREV  -- para unir con prev data
   FROM USERS_SMART U
   WHERE U.LIFE_CYCLE_ACTUAL = 'NEW'
 ),
--- En TVM_PREV se obtiene el tiempo de reproduccion del mes anterior
+
 TVM_PREV AS (
   SELECT
     SIT_SITE_ID,
@@ -158,7 +147,7 @@ TVM_PREV AS (
   FROM CRUCE_FLAG
   GROUP BY 1, 2, 3
 ),
--- Con FREC_USER_TF_PREV se obtiene la frecuencia de reproduccion del mes anterior
+
 FREC_USER_TF_PREV AS (
   SELECT
     SIT_SITE_ID,
@@ -170,48 +159,7 @@ FREC_USER_TF_PREV AS (
     AND DS <= CURRENT_DATE() - 1
   GROUP BY 1, 2, 3
 ),
--- Con USERS_FIRST_MOBILE se obtiene la primer interacción en que dispositivo se realizó, para luego filtrar los que son MOBILE
-USERS_FIRST_MOBILE AS (
-  SELECT
-    SIT_SITE_ID,
-    USER_ID,
-    FIRST_INTERACTION.START_PLAY_TIMESTAMP AS FIRST_PLAY,
-    UPPER(FIRST_INTERACTION.DEVICE_PLATFORM) AS FIRST_PLATFORM
-  FROM (
-    SELECT
-      SIT_SITE_ID,
-      USER_ID,
-      -- Dentro de este FROM con este MIN_BY se obtiene la primer interaccion del usuario por SIT_SITE_ID y USER_ID. En STRUCT se guarda la fecha de la primer reproduccion y la plataforma
-      MIN_BY(STRUCT(START_PLAY_TIMESTAMP, DEVICE_PLATFORM), START_PLAY_TIMESTAMP) AS FIRST_INTERACTION
-    FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`
-    WHERE PLAYBACK_TIME_MILLISECONDS / 1000 >= 20
-      AND DS <= CURRENT_DATE() - 1
-    GROUP BY SIT_SITE_ID, USER_ID
-  )
-),
--- Esta CTE filtra los usuarios que han reproducido contenido en la plataforma MOBILE en su primera vez
-USERS_FIRST_PLAY_MOBILE AS (
-  SELECT
-    SIT_SITE_ID,
-    USER_ID
-  FROM USERS_FIRST_MOBILE
-  WHERE FIRST_PLATFORM LIKE '%MOBILE%'
-),
-USERS_FIRST_PLAY_DESKTOP AS (
-  SELECT
-    SIT_SITE_ID,
-    USER_ID
-  FROM USERS_FIRST_MOBILE
-  WHERE FIRST_PLATFORM LIKE '%DESKTOP%'
-),
-USERS_FIRST_PLAY_SMART AS (
-  SELECT
-    SIT_SITE_ID,
-    USER_ID
-  FROM USERS_FIRST_MOBILE
-  WHERE FIRST_PLATFORM LIKE '%TV%'
-),
--- Con FREC_USER_TF se obtiene la frecuencia de reproduccion del mes actual
+
 FREC_USER_TF AS (
   SELECT
     SIT_SITE_ID,
@@ -223,10 +171,9 @@ FREC_USER_TF AS (
     AND DS <= CURRENT_DATE() - 1
   GROUP BY 1, 2, 3
 )
--- Esta es la consulta final
+
 SELECT
   U.MONTH_ID,
-  -- En este CASE se clasifiacn los usuarios por NOT_LOG o LOG si el USER_ID convertido a INT64 es NULL o no
     CASE WHEN SAFE_CAST(U.USER_ID AS INT64) IS NULL THEN 'NOT_LOG'
        ELSE 'LOG' 
    END AS FLAG_LOG,
@@ -234,22 +181,16 @@ SELECT
   U.PLATFORM_ACTUAL,
   U.LIFE_CYCLE_PREV,
   U.LIFE_CYCLE_ACTUAL,
-  -- Se hacen los conteos de los usuarios y el calculo de las metricas
   COUNT(DISTINCT U.USER_ID) AS TOTAL_USERS,
   ROUND(AVG(F.FRECUENCIA_DIAS), 2) AS FREC_ACTUAL,
   ROUND(SUM(R.TVM_TOTAL_TIMEFRAME), 2) AS TVM_ACTUAL,
   ROUND(AVG(FP.FREC_PREV), 2) AS FREC_PREV,
-  COUNTIF(UFPM.USER_ID IS NOT NULL) AS USERS_FIRST_PLAY_MOBILE,
-  COUNTIF(UFPD.USER_ID IS NOT NULL) AS USERS_FIRST_PLAY_DESKTOP,
-  COUNTIF(UFPS.USER_ID IS NOT NULL) AS USERS_FIRST_PLAY_SMART,
   ROUND(SUM(TP.TVM_PREV), 2) AS TVM_PREV
-  -- En este FROM unimos la información del CTE PLATFORM_PREV_MONTH y USERS_NOW
 FROM (
   SELECT * FROM PLATFORM_PREV_MONTH
   UNION ALL
   SELECT * FROM USERS_NEW
 ) U
--- Aca comienzan los JOINs para traer la información de cada CTE
 JOIN RESUMEN_USER_TF R
   ON R.USER_ID = U.USER_ID
   AND R.SIT_SITE_ID = U.SIT_SITE_ID
@@ -266,14 +207,5 @@ LEFT JOIN FREC_USER_TF_PREV FP
   ON FP.USER_ID = U.USER_ID
   AND FP.SIT_SITE_ID = U.SIT_SITE_ID
   AND FP.MONTH_ID_PREV = U.TIME_FRAME_ID_PREV
-LEFT JOIN USERS_FIRST_PLAY_MOBILE UFPM
-  ON UFPM.USER_ID = U.USER_ID
-  AND UFPM.SIT_SITE_ID = U.SIT_SITE_ID
-LEFT JOIN USERS_FIRST_PLAY_DESKTOP UFPD
-  ON UFPD.USER_ID = U.USER_ID
-  AND UFPD.SIT_SITE_ID = U.SIT_SITE_ID
-LEFT JOIN USERS_FIRST_PLAY_SMART UFPS
-  ON UFPS.USER_ID = U.USER_ID
-  AND UFPS.SIT_SITE_ID = U.SIT_SITE_ID 
 GROUP BY 1, 2, 3, 4, 5, 6
 ORDER BY 1, TOTAL_USERS DESC;
