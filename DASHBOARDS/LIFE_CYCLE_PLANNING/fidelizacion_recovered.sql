@@ -1,329 +1,184 @@
----------------------- PROBANDO AGREGAR M4+ ----------------------
-DECLARE end_month DATE DEFAULT DATE_TRUNC(DATE_SUB(CURRENT_DATE(), INTERVAL 12 MONTH), MONTH);
-DECLARE months_to_analyze INT64 DEFAULT 14;      
+WITH
+-- ===================================
+-- 1) Plays base
+-- ===================================
+PLAY_DAYS AS (
+    SELECT
+        P.SIT_SITE_ID,
+        P.USER_ID,
+        P.DS AS DAY_PLAY,
+        SUM(P.PLAYBACK_TIME_MILLISECONDS / 60000) AS PLAYBACK_TIME
+    FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS` P
+    WHERE P.PLAYBACK_TIME_MILLISECONDS / 1000 >= 20
+    GROUP BY ALL
+),
 
+-- ===================================================================
+-- 2) Usuarios "RECOVERED": cohortes por días de recuperación (nuevo)
+-- ===================================================================
+NEW_RET_RECO AS (
+    SELECT 
+        *,
+        DATE_TRUNC(DS, DAY) AS COHORT_DAY,
+        LAG(DS, 1) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) AS DS_ANT,
+        CASE
+            WHEN LAG(DS, 1) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC) IS NULL THEN 'NEW'
+            WHEN DATE_DIFF(DS, LAG(DS, 1) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC), DAY) <= 30 THEN 'RETAINED'
+            WHEN DATE_DIFF(DS, LAG(DS, 1) OVER (PARTITION BY SIT_SITE_ID, USER_ID ORDER BY START_PLAY_TIMESTAMP ASC), DAY) > 30 THEN 'RECOVERED'
+            ELSE NULL
+        END AS FLAG_N_R
+    FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`
+    WHERE PLAYBACK_TIME_MILLISECONDS / 1000 >= 20
+      AND DS <= CURRENT_DATE - 1
+),
 
-DECLARE i INT64 DEFAULT 0;
-
-
--- Variables que se reutilizan en cada iteración
-DECLARE base_month DATE;
-DECLARE post_month_1 DATE;
-DECLARE post_month_2 DATE;
-DECLARE post_month_3 DATE;
-DECLARE post_month_4 DATE;
-DECLARE post_month_5 DATE;
-DECLARE post_month_6 DATE;
- DECLARE post_month_7 DATE;
-DECLARE post_month_8 DATE;
-DECLARE post_month_9 DATE;
-DECLARE post_month_10 DATE;
-DECLARE post_month_11 DATE;
- 
-DECLARE base_month_start DATE;
-DECLARE base_month_end DATE;
-DECLARE post_month_1_start DATE;
-DECLARE post_month_1_end DATE;
-DECLARE post_month_2_start DATE;
-DECLARE post_month_2_end DATE;
-DECLARE post_month_3_start DATE;
-DECLARE post_month_3_end DATE;
-DECLARE post_month_4_start DATE;
-DECLARE post_month_4_end DATE;
-DECLARE post_month_5_start DATE;
-DECLARE post_month_5_end DATE;
-DECLARE post_month_6_start DATE;
-DECLARE post_month_6_end DATE;
- DECLARE post_month_7_start DATE;
-DECLARE post_month_7_end DATE;
-DECLARE post_month_8_start DATE;
-DECLARE post_month_8_end DATE;
-DECLARE post_month_9_start DATE;
-DECLARE post_month_9_end DATE;
-DECLARE post_month_10_start DATE;
-DECLARE post_month_10_end DATE;
-DECLARE post_month_11_start DATE;
-DECLARE post_month_11_end DATE;
-
-
--- Crea una tabla temporal para guardar los resultados
-CREATE TEMP TABLE recovered_summary (
-  base_month STRING,
-  sit_site_id STRING,
-  m1_recovered INT64,
-  m2_recovered INT64,
-  m3_recovered INT64,
-  m4_recovered INT64,
-  m5_recovered INT64,
-  m6_recovered INT64,
-  m7_recovered INT64,
-  m8_recovered INT64,
-  m9_recovered INT64,
-  m10_recovered INT64,
-  m11_recovered INT64,
-  otros_recovered INT64
-);
-
-
-WHILE i < months_to_analyze DO
-  -- Calcula fechas para esta iteración
-  SET base_month = DATE_ADD(end_month, INTERVAL i MONTH);
-  SET post_month_1 = DATE_ADD(base_month, INTERVAL 1 MONTH);
-  SET post_month_2 = DATE_ADD(base_month, INTERVAL 2 MONTH);
-  SET post_month_3 = DATE_ADD(base_month, INTERVAL 3 MONTH);
-  SET post_month_4 = DATE_ADD(base_month, INTERVAL 4 MONTH);
-  SET post_month_5 = DATE_ADD(base_month, INTERVAL 5 MONTH);
-  SET post_month_6 = DATE_ADD(base_month, INTERVAL 6 MONTH);
-   SET post_month_7 = DATE_ADD(base_month, INTERVAL 7 MONTH);
-  SET post_month_8 = DATE_ADD(base_month, INTERVAL 8 MONTH);
-  SET post_month_9 = DATE_ADD(base_month, INTERVAL 9 MONTH);
-  SET post_month_10 = DATE_ADD(base_month, INTERVAL 10 MONTH);
-  SET post_month_11 = DATE_ADD(base_month, INTERVAL 11 MONTH);
-
-
-  SET base_month_start = DATE_TRUNC(base_month, MONTH);
-  SET base_month_end = DATE_SUB(DATE_ADD(base_month_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  SET post_month_1_start = DATE_TRUNC(post_month_1, MONTH);
-  SET post_month_1_end = DATE_SUB(DATE_ADD(post_month_1_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  SET post_month_2_start = DATE_TRUNC(post_month_2, MONTH);
-  SET post_month_2_end = DATE_SUB(DATE_ADD(post_month_2_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  SET post_month_3_start = DATE_TRUNC(post_month_3, MONTH);
-  SET post_month_3_end = DATE_SUB(DATE_ADD(post_month_3_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  SET post_month_4_start = DATE_TRUNC(post_month_4, MONTH);
-  SET post_month_4_end = DATE_SUB(DATE_ADD(post_month_4_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  SET post_month_5_start = DATE_TRUNC(post_month_5, MONTH);
-  SET post_month_5_end = DATE_SUB(DATE_ADD(post_month_5_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  SET post_month_6_start = DATE_TRUNC(post_month_6, MONTH);
-  SET post_month_6_end = DATE_SUB(DATE_ADD(post_month_6_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
- 
-   SET post_month_7_start = DATE_TRUNC(post_month_7, MONTH);
-  SET post_month_7_end = DATE_SUB(DATE_ADD(post_month_7_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
- 
-  SET post_month_8_start = DATE_TRUNC(post_month_8, MONTH);
-  SET post_month_8_end = DATE_SUB(DATE_ADD(post_month_8_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
- 
-  SET post_month_9_start = DATE_TRUNC(post_month_9, MONTH);
-  SET post_month_9_end = DATE_SUB(DATE_ADD(post_month_9_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
- 
-  SET post_month_10_start = DATE_TRUNC(post_month_10, MONTH);
-  SET post_month_10_end = DATE_SUB(DATE_ADD(post_month_10_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
- 
-  SET post_month_11_start = DATE_TRUNC(post_month_11, MONTH);
-  SET post_month_11_end = DATE_SUB(DATE_ADD(post_month_11_start, INTERVAL 1 MONTH), INTERVAL 1 DAY);
-
-
-  -- Ejecuta lógica para ese mes
-EXECUTE IMMEDIATE FORMAT("""
-  INSERT INTO recovered_summary
-  SELECT
-    '%s' AS BASE_MONTH,
-    SIT_SITE_ID,
-    COUNTIF(recovered_GROUP = 'M1') AS M1_recovered,
-    COUNTIF(recovered_GROUP = 'M2') AS M2_recovered,
-    COUNTIF(recovered_GROUP = 'M3') AS M3_recovered,
-    COUNTIF(recovered_GROUP = 'M4') AS M4_recovered,
-    COUNTIF(recovered_GROUP = 'M5') AS M5_recovered,
-    COUNTIF(recovered_GROUP = 'M6') AS M6_recovered,
-    COUNTIF(recovered_GROUP = 'M7') AS M7_recovered,
-    COUNTIF(recovered_GROUP = 'M8') AS M8_recovered,
-    COUNTIF(recovered_GROUP = 'M9') AS M9_recovered,
-    COUNTIF(recovered_GROUP = 'M10') AS M10_recovered,
-    COUNTIF(recovered_GROUP = 'M11') AS M11_recovered,
-    COUNTIF(recovered_GROUP = 'OTROS') AS OTROS_recovered
-  FROM (
-    WITH BASE_RECOVERED_BASE AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-    BASE_RECOVERED_MENOS_1 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-    BASE_RECOVERED_MENOS_2 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-        BASE_RECOVERED_MENOS_3 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-        BASE_RECOVERED_MENOS_4 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-        BASE_RECOVERED_MENOS_5 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-        BASE_RECOVERED_MENOS_6 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-             BASE_RECOVERED_MENOS_7 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-            BASE_RECOVERED_MENOS_8 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-            BASE_RECOVERED_MENOS_9 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-            BASE_RECOVERED_MENOS_10 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-            BASE_RECOVERED_MENOS_11 AS (
-      SELECT SIT_SITE_ID, USER_ID
-      FROM `meli-bi-data.WHOWNER.DM_MKT_MPLAY_RAW_PLAYS`
-      WHERE TIME_FRAME = 'MONTHLY'
-        -- AND LIFE_CYCLE = 'RECOVERED'
-        AND TIM_DAY BETWEEN DATE '%s' AND DATE '%s'
-      GROUP BY SIT_SITE_ID, USER_ID
-    ),
-    BASE_FULL AS (
-      SELECT
-        base.SIT_SITE_ID,
-        base.USER_ID,
-        TRUE AS RECOVERED_BASE,
-        IF(m1.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_1,
-        IF(m2.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_2,
-        IF(m3.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_3,
-        IF(m4.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_4,
-        IF(m5.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_5,
-        IF(m6.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_6 ,
-        IF(m7.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_7,
-        IF(m8.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_8,
-        IF(m9.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_9,
-        IF(m10.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_10,
-        IF(m11.USER_ID IS NOT NULL, TRUE, FALSE) AS RECOVERED_MENOS_11
-   
-      FROM BASE_RECOVERED_BASE base
-      LEFT JOIN BASE_RECOVERED_MENOS_1 m1
-        ON base.USER_ID = m1.USER_ID AND base.SIT_SITE_ID = m1.SIT_SITE_ID
-      LEFT JOIN BASE_RECOVERED_MENOS_2 m2
-        ON base.USER_ID = m2.USER_ID AND base.SIT_SITE_ID = m2.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_3 m3
-        ON base.USER_ID = m3.USER_ID AND base.SIT_SITE_ID = m3.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_4 m4
-        ON base.USER_ID = m4.USER_ID AND base.SIT_SITE_ID = m4.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_5 m5
-        ON base.USER_ID = m5.USER_ID AND base.SIT_SITE_ID = m5.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_6 m6
-        ON base.USER_ID = m6.USER_ID AND base.SIT_SITE_ID = m6.SIT_SITE_ID
-               LEFT JOIN BASE_RECOVERED_MENOS_7 m7
-        ON base.USER_ID = m7.USER_ID AND base.SIT_SITE_ID = m7.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_8 m8
-        ON base.USER_ID = m8.USER_ID AND base.SIT_SITE_ID = m8.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_9 m9
-        ON base.USER_ID = m9.USER_ID AND base.SIT_SITE_ID = m9.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_10 m10
-        ON base.USER_ID = m10.USER_ID AND base.SIT_SITE_ID = m10.SIT_SITE_ID
-              LEFT JOIN BASE_RECOVERED_MENOS_11 m11
-        ON base.USER_ID = m11.USER_ID AND base.SIT_SITE_ID = m11.SIT_SITE_ID
-    ),
-    CLASIFICACION AS (
-      SELECT
+ATTR_TIME_FRAME_ELEGIDO AS (
+    SELECT 
         SIT_SITE_ID,
         USER_ID,
+        COHORT_DAY,
+        FLAG_N_R
+    FROM NEW_RET_RECO
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY SIT_SITE_ID, USER_ID, COHORT_DAY ORDER BY START_PLAY_TIMESTAMP ASC) = 1
+),
+
+RECOVERED_USERS AS (
+    SELECT
+        SIT_SITE_ID,
+        USER_ID,
+        COHORT_DAY AS RECOVERED_DAY
+    FROM ATTR_TIME_FRAME_ELEGIDO
+    WHERE FLAG_N_R = 'RECOVERED'
+),
+
+-- ===================================================================
+-- 3) Plataforma y minutos vistos (SIN CAMBIOS)
+-- ===================================================================
+DATA_USERS AS (
+    SELECT
+        SIT_SITE_ID,
+        USER_ID,
+        DS,
+        SUM(PLAYBACK_TIME_MILLISECONDS / 60000) AS TVM,
+        SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%TV%' THEN PLAYBACK_TIME_MILLISECONDS / 60000 ELSE 0 END) AS TOTAL_TV,
+        SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%MOBILE%' THEN PLAYBACK_TIME_MILLISECONDS / 60000 ELSE 0 END) AS TOTAL_MOBILE,
+        SUM(CASE WHEN UPPER(DEVICE_PLATFORM) LIKE '%DESK%' THEN PLAYBACK_TIME_MILLISECONDS / 60000 ELSE 0 END) AS TOTAL_DESKTOP,
+        SUM(CASE WHEN PLAYBACK_TIME_MILLISECONDS_CAST / 1000 >= 20 THEN PLAYBACK_TIME_MILLISECONDS_CAST / 60000 ELSE 0 END) AS TOTAL_CAST
+    FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`
+    WHERE PLAYBACK_TIME_MILLISECONDS / 1000 >= 20
+      AND DS <= CURRENT_DATE - 1
+    GROUP BY ALL
+),
+TABLE_CALENDAR_PLATFORM AS (
+    SELECT
+        DATE_TRUNC(DS, MONTH) AS MONTH_ID,
+        SIT_SITE_ID,
+        USER_ID,
+        SUM(TVM) AS TVM,
+        SUM(TOTAL_TV) AS TVM_TV,
+        SUM(TOTAL_MOBILE) AS TVM_MOBILE,
+        SUM(TOTAL_DESKTOP) AS TVM_DESKTOP,
+        SUM(TOTAL_CAST) AS TVM_CAST
+    FROM DATA_USERS
+    GROUP BY ALL
+),
+PLATFORM_DATA AS (
+    SELECT
+        SIT_SITE_ID,
+        USER_ID,
+        MONTH_ID,
         CASE
-          WHEN RECOVERED_BASE AND NOT RECOVERED_MENOS_1 THEN 'M1'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND NOT RECOVERED_MENOS_2 THEN 'M2'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND NOT RECOVERED_MENOS_3 THEN 'M3'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND NOT RECOVERED_MENOS_4 THEN 'M4'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND NOT RECOVERED_MENOS_5 THEN 'M5'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND RECOVERED_MENOS_5 AND NOT RECOVERED_MENOS_6 THEN 'M6'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND RECOVERED_MENOS_5 AND RECOVERED_MENOS_6 AND NOT RECOVERED_MENOS_7 THEN 'M7'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND RECOVERED_MENOS_5 AND RECOVERED_MENOS_6 AND RECOVERED_MENOS_7 AND NOT RECOVERED_MENOS_8 THEN 'M8'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND RECOVERED_MENOS_5 AND RECOVERED_MENOS_6 AND RECOVERED_MENOS_7 AND RECOVERED_MENOS_8 AND NOT RECOVERED_MENOS_9 THEN 'M9'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND RECOVERED_MENOS_5 AND RECOVERED_MENOS_6 AND RECOVERED_MENOS_7 AND RECOVERED_MENOS_8 AND RECOVERED_MENOS_9 AND NOT RECOVERED_MENOS_10 THEN 'M10'
-          WHEN RECOVERED_BASE AND RECOVERED_MENOS_1 AND RECOVERED_MENOS_2 AND RECOVERED_MENOS_3 AND RECOVERED_MENOS_4 AND RECOVERED_MENOS_5 AND RECOVERED_MENOS_6 AND RECOVERED_MENOS_7 AND RECOVERED_MENOS_8 AND RECOVERED_MENOS_9 AND RECOVERED_MENOS_10 AND NOT RECOVERED_MENOS_11 THEN 'M11'
-          ELSE 'OTROS'
-        END AS recovered_GROUP
-      FROM BASE_FULL
-    )
-    SELECT * FROM CLASIFICACION
-  )
-  GROUP BY SIT_SITE_ID
-  """,
-  FORMAT_DATE('%Y-%m', base_month_start),  -- 1er parámetro del SELECT
-  FORMAT_DATE('%F', base_month_start), FORMAT_DATE('%F', base_month_end),
-  FORMAT_DATE('%F', post_month_1_start), FORMAT_DATE('%F', post_month_1_end),
-  FORMAT_DATE('%F', post_month_2_start), FORMAT_DATE('%F', post_month_2_end),
-  FORMAT_DATE('%F', post_month_3_start), FORMAT_DATE('%F', post_month_3_end),
-  FORMAT_DATE('%F', post_month_4_start), FORMAT_DATE('%F', post_month_4_end),
-  FORMAT_DATE('%F', post_month_5_start), FORMAT_DATE('%F', post_month_5_end),
-  FORMAT_DATE('%F', post_month_6_start), FORMAT_DATE('%F', post_month_6_end) ,
-  FORMAT_DATE('%F', post_month_7_start), FORMAT_DATE('%F', post_month_7_end),
-  FORMAT_DATE('%F', post_month_8_start), FORMAT_DATE('%F', post_month_8_end),
-  FORMAT_DATE('%F', post_month_9_start), FORMAT_DATE('%F', post_month_9_end),
-  FORMAT_DATE('%F', post_month_10_start), FORMAT_DATE('%F', post_month_10_end),
-  FORMAT_DATE('%F', post_month_11_start), FORMAT_DATE('%F', post_month_11_end)
-);
+            WHEN ROUND(TVM, 2) = ROUND(TVM_CAST, 2) AND TVM_CAST > 0 THEN 'CAST'
+            ELSE CONCAT(
+                CASE WHEN TVM_TV > 0 THEN 'SMART' ELSE '' END, ' - ',
+                CASE WHEN TVM_MOBILE > 0 THEN 'MOBILE' ELSE '' END, ' - ',
+                CASE WHEN TVM_DESKTOP > 0 THEN 'DESKTOP' ELSE '' END, ' - ',
+                CASE WHEN TVM_CAST > 0 THEN 'CAST' ELSE '' END
+            )
+        END AS PLATFORM_CONCAT
+    FROM TABLE_CALENDAR_PLATFORM
+),
 
+-- ===================================================================
+-- 4) Tabla calendario de cohortes (MISMA LÓGICA)
+-- ===================================================================
+TABLE_CALENDAR AS (
+    SELECT *
+    FROM (
+        SELECT *,
+            ROW_NUMBER() OVER (PARTITION BY FECHA_COHORT ORDER BY FECHA_INI ASC) AS MONTH_NUMBER
+        FROM (
+            SELECT
+                T.TIM_DAY AS FECHA_COHORT,
+                T2.TIM_DAY - 29 AS FECHA_INI,
+                T2.TIM_DAY AS FECHA_FIN
+            FROM `meli-bi-data.WHOWNER.LK_TIM_DAYS` T
+            LEFT JOIN `meli-bi-data.WHOWNER.LK_TIM_DAYS` T2
+                ON T.TIM_DAY + 1 <= T2.TIM_DAY
+            WHERE T.TIM_DAY >= DATE '2023-07-01'
+            QUALIFY MOD(ROW_NUMBER() OVER (PARTITION BY T.TIM_DAY ORDER BY T2.TIM_DAY ASC), 30) = 0
+        ) AS A
+        WHERE FECHA_FIN <= DATE_SUB(DATE_TRUNC(CURRENT_DATE, MONTH), INTERVAL 1 DAY)
+    ) AS B
+    QUALIFY COUNT(FECHA_FIN) OVER (PARTITION BY DATE_TRUNC(FECHA_COHORT, MONTH), MONTH_NUMBER) = EXTRACT(DAY FROM(LAST_DAY(FECHA_COHORT)))
+),
 
-  SET i = i + 1;
-END WHILE;
+-- ===================================================================
+-- 5) Usuarios recovered con calendario y plataformas
+-- ===================================================================
+USERS_CALENDAR AS (
+    SELECT
+        RU.SIT_SITE_ID,
+        RU.USER_ID,
+        RU.RECOVERED_DAY,
+        T.FECHA_INI,
+        T.FECHA_FIN,
+        T.MONTH_NUMBER,
+        P.PLATFORM_CONCAT
+    FROM RECOVERED_USERS RU
+    LEFT JOIN TABLE_CALENDAR T
+        ON RU.RECOVERED_DAY = T.FECHA_COHORT
+    LEFT JOIN PLATFORM_DATA P
+        ON RU.SIT_SITE_ID = P.SIT_SITE_ID
+        AND RU.USER_ID = P.USER_ID
+        AND DATE_TRUNC(RU.RECOVERED_DAY, MONTH) = P.MONTH_ID
+),
 
--- Mostramos los resultados finales de la tabla temporal
-  SELECT * FROM recovered_summary 
-  ORDER BY base_month 
-  DESC, sit_site_id;
+-- ===================================================================
+-- 6) Base con métricas por cohorte recovered y canal
+-- ===================================================================
+BASE AS (
+    SELECT
+        U.SIT_SITE_ID,
+        U.USER_ID,
+        U.MONTH_NUMBER,
+        DATE_TRUNC(U.RECOVERED_DAY, MONTH) AS MONTH_COHORT_RECOVERED,
+        SUM(P.PLAYBACK_TIME) AS TVM,
+        CASE WHEN SUM(P.PLAYBACK_TIME) > 0 THEN 1 ELSE 0 END AS FLAG_TVM,
+        U.PLATFORM_CONCAT
+    FROM USERS_CALENDAR U
+    LEFT JOIN PLAY_DAYS P
+        ON U.USER_ID = P.USER_ID
+        AND U.SIT_SITE_ID = P.SIT_SITE_ID
+        AND P.DAY_PLAY BETWEEN U.FECHA_INI AND U.FECHA_FIN
+    GROUP BY
+        U.SIT_SITE_ID, U.USER_ID, U.MONTH_NUMBER, U.RECOVERED_DAY, U.PLATFORM_CONCAT
+)
+
+-- ===================================================================
+-- 7) Query final con cohorte RECOVERED + plataforma
+-- ===================================================================
+SELECT
+    SIT_SITE_ID,
+    MONTH_COHORT_RECOVERED,
+    MONTH_NUMBER - 1 AS MONTH_RETENTION,
+    PLATFORM_CONCAT AS PLATFORM,
+    COUNT(DISTINCT USER_ID || SIT_SITE_ID) AS TOTAL_USERS_COHORT,
+    COUNT(DISTINCT CASE WHEN TVM > 0 THEN USER_ID || SIT_SITE_ID ELSE NULL END) AS TOTAL_USERS_RETENTION,
+    SUM(TVM) AS TVM,
+    COUNT(DISTINCT CASE WHEN TVM > 0 AND FLAG_TVM = 1 THEN USER_ID || SIT_SITE_ID ELSE NULL END) AS ALL_MONTH_USER_RET,
+    SUM(CASE WHEN TVM > 0 AND FLAG_TVM = 1 THEN TVM ELSE NULL END) AS ALL_MONTH_TVM
+FROM BASE
+WHERE MONTH_NUMBER IS NOT NULL
+GROUP BY SIT_SITE_ID, MONTH_COHORT_RECOVERED, MONTH_NUMBER, PLATFORM_CONCAT
+ORDER BY MONTH_COHORT_RECOVERED, MONTH_RETENTION, PLATFORM; 

@@ -101,11 +101,11 @@ AS
       END AS PLATFORM,
       -- Nuevos campos de clasificación
       COALESCE(e.FLAG_N_R, 'Undefined') AS User_Classification,
-      CONCAT(o.SOURCE_SESSION_L1,'-', o.SOURCE_SESSION_L2, '-', o.TEAM) AS touchpoint_team,
-      CONCAT(o.SOURCE_SESSION_L1,'-', o.SOURCE_SESSION_L2) AS touchpoint_no_team,
-      o.SOURCE_SESSION_L1 AS Clasificacion,
-      o.SOURCE_SESSION_L2 AS Clasificacion_2,
-      o.TEAM AS Team,
+      CONCAT(o.Clasificacion,'-', o.Subclasificacion, '-', oc.TEAM) AS touchpoint_team,
+      CONCAT(o.Clasificacion,'-', o.Subclasificacion) AS touchpoint_no_team,
+      o.Clasificacion AS Clasificacion,
+      o.Subclasificacion AS Clasificacion_2,
+      oc.TEAM AS Team,
       -- Métricas
       COUNT(DISTINCT s.melidata_session_id) Sessions,
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_visit,
@@ -115,8 +115,10 @@ AS
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) AS Valid_Visitors,
       COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) AS Viewers
   FROM SESSION_PLAY s
-  LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` o
-      ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(o.SOURCE_TYPE, 'NULL')
+  LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
+      ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(o.origin, 'NULL')
+  LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` oc
+    ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(oc.SOURCE_TYPE, 'NULL')
   -- LEFT JOIN para unir la clasificación de usuario
   LEFT JOIN ATTR_TIME_FRAME_ELEGIDO e
       ON s.SIT_SITE_ID = e.SIT_SITE_ID
