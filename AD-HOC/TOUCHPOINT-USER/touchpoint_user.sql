@@ -7,7 +7,7 @@ AS
       SELECT
           SIT_SITE_ID,
           USER_ID,
-          DATE_TRUNC(DS, MONTH) AS TIME_FRAME_ID,
+          DS AS TIME_FRAME_ID,
           (CASE WHEN (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)) IS NULL THEN 'NEW'
                 WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) <= 30 THEN 'RETAINED'
                 WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) > 30 THEN 'RECOVERED'
@@ -24,8 +24,7 @@ AS
           TIME_FRAME_ID,
           FLAG_N_R
       FROM NEW_RET_RECO
-      QUALIFY ROW_NUMBER() OVER(PARTITION BY SIT_SITE_ID,USER_ID,TIME_FRAME_ID
-                                ORDER BY TIME_FRAME_ID ASC) = 1
+      QUALIFY ROW_NUMBER() OVER(PARTITION BY SIT_SITE_ID,USER_ID,TIME_FRAME_ID ORDER BY TIME_FRAME_ID ASC) = 1
   ),
   -- CTE 1 de la query original: Sesiones
   SESSIONS AS (
@@ -85,13 +84,14 @@ AS
   -- Consulta final integrada
   SELECT
       s.sit_site_id,
+      S.DS AS DAY_ID,
       DATE_TRUNC(s.DS, MONTH) AS MONTH_ID,
       DATE_TRUNC(s.DS, WEEK(MONDAY)) AS WEEK_ID,
       CASE
           WHEN S.DEVICE_PLATFORM IN ('/tv/android') THEN '/tv/android'
           WHEN S.DEVICE_PLATFORM IN ('/tv/Tizen') THEN '/tv/Tizen'
           WHEN S.DEVICE_PLATFORM IN ('/tv/Web0S') THEN '/tv/Web0S'
-          ELSE COALESCE(o.SOURCE_TYPE, 'Otros')
+          ELSE COALESCE(o.origin, 'Otros')
       END AS Origin,
       CASE 
           WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%TV%' THEN 'SMART'
@@ -123,9 +123,10 @@ AS
   LEFT JOIN ATTR_TIME_FRAME_ELEGIDO e
       ON s.SIT_SITE_ID = e.SIT_SITE_ID
       AND s.USER_ID = e.USER_ID
-      AND s.MONTH_ID = e.TIME_FRAME_ID
+      AND s.DS = e.TIME_FRAME_ID
   GROUP BY
       s.sit_site_id,
+      s.DS,
       MONTH_ID,
       WEEK_ID,
       Origin,
