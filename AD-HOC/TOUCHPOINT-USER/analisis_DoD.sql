@@ -1,124 +1,111 @@
--- 1. Identifica últimos 30 días hábiles y últimos 4 fines de semana con datos
+-- Base filtrada para últimos 40 días
 WITH DSS_BASE AS (
   SELECT
     TOUCHPOINT_NO_TEAM,
-    DS,
-    EXTRACT(DAYOFWEEK FROM DS) AS DAY_OF_WEEK, -- 1=Domingo, 7=Sábado
+    DAY_ID,
+    EXTRACT(DAYOFWEEK FROM DAY_ID) AS DAY_OF_WEEK, -- 1=Domingo, 7=Sábado
     ROUND(SUM(Sessions), 2) AS TOTAL_SESSIONS
   FROM `meli-sbox.MPLAY.MPLAY_TOUCHPOINT_USER`
+  WHERE DAY_ID >= DATE_SUB(CURRENT_DATE(), INTERVAL 40 DAY)
   GROUP BY ALL
 ),
 
--- Determina si la ds es finde o hábil
+-- Determina día de la semana de cada fecha
 ETIQUETADAS AS (
   SELECT
-    TOUCHPOINT_NO_TEAM, DS, TOTAL_SESSIONS,
-    CASE WHEN DAY_OF_WEEK IN (1,7) THEN 'finde' ELSE 'habil' END AS TIPO_DIA
+    TOUCHPOINT_NO_TEAM, DAY_ID, DAY_OF_WEEK, TOTAL_SESSIONS
   FROM DSS_BASE
 ),
 
-ultimos_habiles AS (
-  SELECT *
-  FROM (
-    SELECT *,
-           ROW_NUMBER() OVER (PARTITION BY touchpoint_no_team ORDER BY ds DESC) AS rn
-    FROM etiquetadas
-    WHERE tipo_dia = 'habil'
-      AND ds < CURRENT_DATE()
-  )
-  WHERE rn <= 30
-),
-ultimos_findes AS (
-  SELECT *
-  FROM (
-    SELECT *,
-           ROW_NUMBER() OVER (PARTITION BY touchpoint_no_team ORDER BY ds DESC) AS rn
-    FROM etiquetadas
-    WHERE tipo_dia = 'finde'
-      AND ds < CURRENT_DATE()
-  )
-  WHERE rn <= 8
-),
--- Día análisis: hoy
+-- Día de análisis: ayer
 hoy_tag AS (
   SELECT
     touchpoint_no_team,
-    ds,
+    DAY_ID,
     total_sessions,
-    CASE WHEN EXTRACT(DAYOFWEEK FROM ds) IN (1,7) THEN 'finde' ELSE 'habil' END AS tipo_dia
-  FROM dss_base
-  WHERE ds = CURRENT_DATE()-1
+    day_of_week
+  FROM DSS_BASE
+  WHERE DAY_ID = CURRENT_DATE()-1
 ),
 
--- para hábiles:
-stats_habiles AS (
+-- Para cada touchpoint y día, trae los últimos 4 días de semana iguales anteriores a ayer
+ultimos_similares AS (
   SELECT
-    touchpoint_no_team,
-    COUNT(*) AS n_habiles,
-    ROUND(AVG(total_sessions), 2) AS media_hab,
-    ROUND(STDDEV(total_sessions), 2) AS desviacion_hab
-  FROM ultimos_habiles
-  GROUP BY touchpoint_no_team
-  HAVING n_habiles >= 30
-),
--- para findes:
-stats_findes AS (
-  SELECT
-    touchpoint_no_team,
-    COUNT(*) AS n_findes,
-    ROUND(AVG(total_sessions), 2) AS media_find,
-    ROUND(STDDEV(total_sessions), 2) AS desviacion_find
-  FROM ultimos_findes
-  GROUP BY touchpoint_no_team
-  HAVING n_findes >= 8
+    t1.touchpoint_no_team,
+    t1.DAY_ID,
+    t1.total_sessions,
+    t1.day_of_week,
+    hoy.DAY_ID AS fecha_analisis,
+    hoy.day_of_week AS dia_semanal_analisis,
+    ROW_NUMBER() OVER (
+      PARTITION BY t1.touchpoint_no_team, t1.day_of_week
+      ORDER BY t1.DAY_ID DESC
+    ) AS rn
+  FROM ETIQUETADAS t1
+  JOIN hoy_tag hoy
+    ON t1.touchpoint_no_team = hoy.touchpoint_no_team
+    AND t1.day_of_week = hoy.day_of_week
+    AND t1.DAY_ID < hoy.DAY_ID -- solo fechas anteriores a la de análisis
 ),
 
--- Junta stats con el día actual según tipo
+ultimos_4_similares AS (
+  SELECT *
+  FROM ultimos_similares
+  WHERE rn <= 4
+),
+
+-- Calcula stats usando solo los últimos 4 días "similares"
+stats_similares AS (
+  SELECT
+    touchpoint_no_team,
+    day_of_week,
+    COUNT(*) AS n_similares,
+    ROUND(AVG(total_sessions), 2) AS media_similar,
+    ROUND(STDDEV(total_sessions), 2) AS desviacion_similar
+  FROM ultimos_4_similares
+  GROUP BY touchpoint_no_team, day_of_week
+  HAVING n_similares = 4
+),
+
+-- Unimos stats con el día de análisis (ayer)
 join_stats AS (
   SELECT
-    hoy_tag.*,
-    stats_habiles.media_hab, stats_habiles.desviacion_hab,
-    stats_findes.media_find, stats_findes.desviacion_find
-  FROM hoy_tag
-  LEFT JOIN stats_habiles USING (touchpoint_no_team)
-  LEFT JOIN stats_findes USING (touchpoint_no_team)
+    h.touchpoint_no_team, h.DAY_ID, h.total_sessions, h.day_of_week,
+    s.media_similar, s.desviacion_similar
+  FROM hoy_tag h
+  LEFT JOIN stats_similares s
+    ON h.touchpoint_no_team = s.touchpoint_no_team
+   AND h.day_of_week = s.day_of_week
 ),
 
--- Calcula z-score según tipo de día
 final AS (
   SELECT
     touchpoint_no_team,
-    ds,
-    tipo_dia,
-    total_sessions,
-    CASE
-      WHEN tipo_dia = 'habil' THEN SAFE_DIVIDE(total_sessions - media_hab, desviacion_hab)
-      ELSE SAFE_DIVIDE(total_sessions - media_find, desviacion_find)
-    END AS z_score,
-    CASE
-      WHEN tipo_dia = 'habil' THEN desviacion_hab
-      ELSE desviacion_find
-    END AS desviacion_usada,
-    CASE
-      WHEN tipo_dia = 'habil' THEN media_hab
-      ELSE media_find
-    END AS media_usada
+    DAY_ID AS fecha,
+    day_of_week,
+    total_sessions AS sesiones_ayer,
+    media_similar AS media_ventana,
+    desviacion_similar AS desviacion_ventana,
+    -- Agregado: variación porcentual respecto al promedio de los días similares
+    ROUND(SAFE_DIVIDE(total_sessions - media_similar, media_similar) * 100, 2) AS variacion_pct,
+    -- También mantenemos el z_score por si filtras por ahí
+    ROUND(SAFE_DIVIDE(total_sessions - media_similar, desviacion_similar), 2) AS z_score
   FROM join_stats
 )
 
 SELECT
-  touchpoint_no_team,
-  ds AS fecha,
-  tipo_dia,
-  total_sessions AS sesiones_ayer,
-  media_usada AS media_ventana,
-  desviacion_usada AS desviacion_ventana,
-  CASE
-    WHEN tipo_dia = 'habil' THEN 'media_hab'
-    ELSE 'media_find'
-  END AS tipo_de_media,
-  ROUND(z_score, 2) AS z_score
+  *,
+  CASE day_of_week
+    WHEN 1 THEN 'Domingo'
+    WHEN 2 THEN 'Lunes'
+    WHEN 3 THEN 'Martes'
+    WHEN 4 THEN 'Miércoles'
+    WHEN 5 THEN 'Jueves'
+    WHEN 6 THEN 'Viernes'
+    WHEN 7 THEN 'Sábado'
+    ELSE CAST(day_of_week AS STRING)
+  END AS dia_nombre
 FROM final
 WHERE ABS(z_score) >= 2
-  AND desviacion_usada > 0
+  AND desviacion_ventana > 0
 ORDER BY ABS(z_score) DESC

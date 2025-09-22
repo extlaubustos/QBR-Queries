@@ -1,5 +1,4 @@
-CREATE OR REPLACE TABLE meli-sbox.MPLAY.MPLAY_TOUCHPOINT_USER
-AS
+CREATE OR REPLACE TABLE meli-sbox.MPLAY.MPLAY_TOUCHPOINT_USER AS
 (
   -- CTE para clasificar a los usuarios como NEW, RETAINED, RECOVERED
   WITH NEW_RET_RECO AS
@@ -7,7 +6,7 @@ AS
       SELECT
           SIT_SITE_ID,
           USER_ID,
-          DS AS TIME_FRAME_ID,
+          DATE_TRUNC(DS, MONTH) AS TIME_FRAME_ID,
           (CASE WHEN (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)) IS NULL THEN 'NEW'
                 WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) <= 30 THEN 'RETAINED'
                 WHEN DATE_DIFF(DS, (LAG(DS,1)OVER(PARTITION BY SIT_SITE_ID,USER_ID ORDER BY START_PLAY_TIMESTAMP ASC)), DAY) > 30 THEN 'RECOVERED'
@@ -16,7 +15,6 @@ AS
       WHERE PLAYBACK_TIME_MILLISECONDS/1000 >= 20
           AND DS <= CURRENT_DATE-1
   ),
-  -- CTE para obtener la bandera de atribución (primer play por mes)
   ATTR_TIME_FRAME_ELEGIDO AS (
       SELECT
           SIT_SITE_ID,
@@ -26,17 +24,17 @@ AS
       FROM NEW_RET_RECO
       QUALIFY ROW_NUMBER() OVER(PARTITION BY SIT_SITE_ID,USER_ID,TIME_FRAME_ID ORDER BY TIME_FRAME_ID ASC) = 1
   ),
-  -- CTE 1 de la query original: Sesiones
   SESSIONS AS (
     SELECT
       s.SIT_SITE_ID,
       DATE_TRUNC(s.ds, MONTH) AS MONTH_ID,
-      DATE_TRUNC(s.ds, WEEK(MONDAY)) AS fecha_week,
+      DATE_TRUNC(s.ds, WEEK(MONDAY)) AS WEEK_ID,
       s.ds,
       ORIGIN_PATH AS FIRST_EVENT_SOURCE,
       FIRST_TRACK AS FIRST_EVENT_PATH,
       FIRST_PLAY_DATETIME AS PLAY_TIMESTAMP,
       s.USER_ID,
+      A.FLAG_N_R AS FLAG_N_R,
       s.SESSION_ID AS MELIDATA_SESSION_ID,
       s.DEVICE_PLATFORM,
       IF(
@@ -50,22 +48,26 @@ AS
       HAS_PLAY,
       S.TOTAL_SESSION_MILLISECOND / 1000 AS session_time_sec
     FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION` AS s
+    LEFT JOIN ATTR_TIME_FRAME_ELEGIDO AS A
+      ON s.SIT_SITE_ID = A.SIT_SITE_ID
+      AND s.USER_ID = A.USER_ID
+      AND DATE_TRUNC(s.ds, MONTH) = A.TIME_FRAME_ID
     WHERE s.ds >= '2024-12-30'
       AND s.ds < CURRENT_DATE()
       AND s.SIT_SITE_ID IN UNNEST(['MLC', 'MLA', 'MLB', 'MLM', 'MCO', 'MPE', 'MLU', 'MEC'])
     GROUP BY ALL
   ),
-  -- CTE 2 de la query original: Sesiones con datos de Play
   SESSION_PLAY AS (
     SELECT DISTINCT
       s.SIT_SITE_ID,
       s.MONTH_ID,
-      s.fecha_week,
+      s.WEEK_ID,
       S.DS,
       s.FIRST_EVENT_SOURCE,
       s.FIRST_EVENT_PATH,
       s.PLAY_TIMESTAMP,
       s.USER_ID,
+      S.FLAG_N_R,
       s.MELIDATA_SESSION_ID,
       s.FLAG_VALID_VISIT,
       s.HAS_PLAY,
@@ -80,11 +82,12 @@ AS
       AND S.MELIDATA_SESSION_ID = P.SESSION_ID
       AND P.PLAYBACK_TIME_MILLISECONDS / 1000 >= 20
     GROUP BY ALL
-  )
-  -- Consulta final integrada
+  ),
+  BASE_MPLAY_DAILY AS (
   SELECT
+      'DAILY' AS timeframe_type,
+      s.DS AS timeframe_id,
       s.sit_site_id,
-      S.DS AS DAY_ID,
       DATE_TRUNC(s.DS, MONTH) AS MONTH_ID,
       DATE_TRUNC(s.DS, WEEK(MONDAY)) AS WEEK_ID,
       CASE
@@ -99,19 +102,13 @@ AS
           WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%DESK%' THEN 'DESKTOP'
           ELSE 'OTHER'
       END AS PLATFORM,
-      -- Nuevos campos de clasificación
-      COALESCE(e.FLAG_N_R, 'Undefined') AS User_Classification,
-      CONCAT(o.Clasificacion,'-', o.Subclasificacion, '-', oc.TEAM) AS touchpoint_team,
-      CONCAT(o.Clasificacion,'-', o.Subclasificacion) AS touchpoint_no_team,
-      o.Clasificacion AS Clasificacion,
-      o.Subclasificacion AS Clasificacion_2,
-      oc.TEAM AS Team,
-      -- Métricas
-      COUNT(DISTINCT s.melidata_session_id) Sessions,
+      COALESCE(s.FLAG_N_R, 'No definido') AS User_Classification,
+      oc.TEAM AS team,
+      COUNT(DISTINCT s.melidata_session_id) AS Sessions,
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_visit,
       COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_view,
       ROUND(SUM(s.TVM),2) AS TVM,
-      COUNT(DISTINCT s.USER_ID) Visitors,
+      COUNT(DISTINCT s.USER_ID) AS Visitors,
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) AS Valid_Visitors,
       COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) AS Viewers
   FROM SESSION_PLAY s
@@ -119,11 +116,6 @@ AS
       ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(o.origin, 'NULL')
   LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` oc
     ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(oc.SOURCE_TYPE, 'NULL')
-  -- LEFT JOIN para unir la clasificación de usuario
-  LEFT JOIN ATTR_TIME_FRAME_ELEGIDO e
-      ON s.SIT_SITE_ID = e.SIT_SITE_ID
-      AND s.USER_ID = e.USER_ID
-      AND s.DS = e.TIME_FRAME_ID
   GROUP BY
       s.sit_site_id,
       s.DS,
@@ -131,11 +123,169 @@ AS
       WEEK_ID,
       Origin,
       User_Classification,
-      touchpoint_team,
-      touchpoint_no_team,
-      Clasificacion,
-      Clasificacion_2,
-      Team, 
-      PLATFORM
-  ORDER BY WEEK_ID ASC
+      PLATFORM,
+      TEAM
+  ),
+  BASE_MPLAY_WEEKLY AS (
+  SELECT
+      'WEEKLY' AS timeframe_type,
+      s.WEEK_ID AS timeframe_id,
+      s.sit_site_id,
+      DATE_TRUNC(s.WEEK_ID, MONTH) AS MONTH_ID,
+      s.WEEK_ID,
+      CASE
+          WHEN S.DEVICE_PLATFORM IN ('/tv/android') THEN '/tv/android'
+          WHEN S.DEVICE_PLATFORM IN ('/tv/Tizen') THEN '/tv/Tizen'
+          WHEN S.DEVICE_PLATFORM IN ('/tv/Web0S') THEN '/tv/Web0S'
+          ELSE COALESCE(o.origin, 'Otros')
+      END AS Origin,
+      CASE 
+          WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%TV%' THEN 'SMART'
+          WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%MOBILE%' THEN 'MOBILE'
+          WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%DESK%' THEN 'DESKTOP'
+          ELSE 'OTHER'
+      END AS PLATFORM,
+      COALESCE(s.FLAG_N_R, 'No definido') AS User_Classification,
+      oc.TEAM AS team,
+      COUNT(DISTINCT s.melidata_session_id) AS Sessions,
+      COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_visit,
+      COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_view,
+      ROUND(SUM(s.TVM),2) AS TVM,
+      COUNT(DISTINCT s.USER_ID) AS Visitors,
+      COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) AS Valid_Visitors,
+      COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) AS Viewers
+  FROM SESSION_PLAY s
+  LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
+      ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(o.origin, 'NULL')
+  LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` oc
+    ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(oc.SOURCE_TYPE, 'NULL')
+  GROUP BY
+      s.sit_site_id,
+      s.WEEK_ID,
+      MONTH_ID,
+      Origin,
+      User_Classification,
+      PLATFORM,
+      TEAM
+  ),
+  BASE_MPLAY_MONTHLY AS (
+  SELECT
+      'MONTHLY' AS timeframe_type,
+      s.MONTH_ID AS timeframe_id,
+      s.sit_site_id,
+      s.MONTH_ID,
+      '' AS WEEK_ID,
+      CASE
+          WHEN S.DEVICE_PLATFORM IN ('/tv/android') THEN '/tv/android'
+          WHEN S.DEVICE_PLATFORM IN ('/tv/Tizen') THEN '/tv/Tizen'
+          WHEN S.DEVICE_PLATFORM IN ('/tv/Web0S') THEN '/tv/Web0S'
+          ELSE COALESCE(o.origin, 'Otros')
+      END AS Origin,
+      CASE 
+          WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%TV%' THEN 'SMART'
+          WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%MOBILE%' THEN 'MOBILE'
+          WHEN UPPER(S.DEVICE_PLATFORM) LIKE '%DESK%' THEN 'DESKTOP'
+          ELSE 'OTHER'
+      END AS PLATFORM,
+      COALESCE(s.FLAG_N_R, 'No definido') AS User_Classification,
+      oc.TEAM AS team,
+      COUNT(DISTINCT s.melidata_session_id) AS Sessions,
+      COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_visit,
+      COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.melidata_session_id ELSE NULL END) AS Sessions_valid_view,
+      ROUND(SUM(s.TVM),2) AS TVM,
+      COUNT(DISTINCT s.USER_ID) AS Visitors,
+      COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) AS Valid_Visitors,
+      COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) AS Viewers
+  FROM SESSION_PLAY s
+  LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
+      ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(o.origin, 'NULL')
+  LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` oc
+    ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(oc.SOURCE_TYPE, 'NULL')
+  GROUP BY
+      s.sit_site_id,
+      s.MONTH_ID,
+      Origin,
+      User_Classification,
+      PLATFORM,
+      TEAM
+  )
+SELECT
+  b.timeframe_type,
+  b.timeframe_id,
+  b.sit_site_id,
+  b.MONTH_ID,
+  SAFE_CAST(b.WEEK_ID AS DATE) AS WEEK_ID,
+  b.Origin,
+  b.User_Classification,
+  CONCAT(o.Clasificacion, '-', o.Subclasificacion, '-', team) AS touchpoint_team,
+  CONCAT(o.Clasificacion, '-', o.Subclasificacion) AS touchpoint_no_team,
+  o.Clasificacion AS Clasificacion,
+  o.Subclasificacion AS Clasificacion_2,
+  b.team,
+  b.platform, 
+  b.Sessions,
+  b.Sessions_valid_visit,
+  b.Sessions_valid_view,
+  b.TVM,
+  b.Visitors,
+  b.Valid_Visitors,
+  b.Viewers
+FROM BASE_MPLAY_DAILY b
+LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
+  ON b.Origin = o.origin
+
+UNION ALL
+
+SELECT
+  b.timeframe_type,
+  b.timeframe_id,
+  b.sit_site_id,
+  b.MONTH_ID,
+  SAFE_CAST(b.WEEK_ID AS DATE) AS WEEK_ID,
+  b.Origin,
+  b.User_Classification,
+  CONCAT(o.Clasificacion, '-', o.Subclasificacion, '-', team) AS touchpoint_team,
+  CONCAT(o.Clasificacion, '-', o.Subclasificacion) AS touchpoint_no_team,
+  o.Clasificacion AS Clasificacion,
+  o.Subclasificacion AS Clasificacion_2,
+  b.team,
+  b.platform, 
+  b.Sessions,
+  b.Sessions_valid_visit,
+  b.Sessions_valid_view,
+  b.TVM,
+  b.Visitors,
+  b.Valid_Visitors,
+  b.Viewers
+FROM BASE_MPLAY_WEEKLY b
+LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
+  ON b.Origin = o.origin
+
+UNION ALL
+
+SELECT
+  b.timeframe_type,
+  b.timeframe_id,
+  b.sit_site_id,
+  b.MONTH_ID,
+  SAFE_CAST(b.WEEK_ID AS DATE) AS WEEK_ID,
+  b.Origin,
+  b.User_Classification,
+  CONCAT(o.Clasificacion, '-', o.Subclasificacion, '-', team) AS touchpoint_team,
+  CONCAT(o.Clasificacion, '-', o.Subclasificacion) AS touchpoint_no_team,
+  o.Clasificacion AS Clasificacion,
+  o.Subclasificacion AS Clasificacion_2,
+  b.team,
+  b.platform, 
+  b.Sessions,
+  b.Sessions_valid_visit,
+  b.Sessions_valid_view,
+  b.TVM,
+  b.Visitors,
+  b.Valid_Visitors,
+  b.Viewers
+FROM BASE_MPLAY_MONTHLY b
+LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
+  ON b.Origin = o.origin
+ORDER BY timeframe_type, timeframe_id ASC
 );
