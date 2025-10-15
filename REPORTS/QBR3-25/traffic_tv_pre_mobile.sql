@@ -1,7 +1,7 @@
 DECLARE date_from DATE;
 DECLARE date_to DATE;
 SET date_from = '2025-04-01';
-SET date_to = '2025-09-30';
+SET date_to = CURRENT_DATE - 1;
 
 WITH ALL_TV_SESSIONS AS (
   SELECT
