@@ -19,7 +19,8 @@ WITH NEW_RET_RECO AS
               ELSE NULL END) AS FLAG_N_R
     FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS`
     WHERE PLAYBACK_TIME_MILLISECONDS/1000 >= 20
-        AND DS <= CURRENT_DATE() - 1 -- Filtro ajustado al límite máximo de la carga
+        -- El límite máximo de DS es el fin de la semana pasada (Ayer)
+        AND DS <= CURRENT_DATE() - 1 
 ),
 ATTR_TIME_FRAME_ELEGIDO AS (
     SELECT
@@ -31,7 +32,7 @@ ATTR_TIME_FRAME_ELEGIDO AS (
     QUALIFY ROW_NUMBER() OVER(PARTITION BY SIT_SITE_ID,USER_ID,TIME_FRAME_ID ORDER BY TIME_FRAME_ID ASC) = 1
 ),
 
--- CTE de Sesiones (Filtro de fecha aplicado aquí)
+-- CTE de Sesiones (Filtro de fecha aplicado aquí para la semana anterior)
 SESSIONS AS (
     SELECT
         s.SIT_SITE_ID,
@@ -59,7 +60,10 @@ SESSIONS AS (
         ON s.SIT_SITE_ID = A.SIT_SITE_ID
         AND s.USER_ID = A.USER_ID
         AND DATE_TRUNC(s.ds, MONTH) = A.TIME_FRAME_ID
-    WHERE s.ds = CURRENT_DATE() - 1 -- 🚨 FILTRO CLAVE: Sólo el día anterior
+    WHERE 
+        -- 🚨 FILTRO CLAVE: Rango de la semana anterior (Lunes a Domingo)
+        s.ds >= DATE_TRUNC(CURRENT_DATE(), WEEK(MONDAY)) - INTERVAL 7 DAY  -- Lunes de la semana pasada
+        AND s.ds < DATE_TRUNC(CURRENT_DATE(), WEEK(MONDAY))               -- Hasta el Lunes de la semana actual (exclusivo)
         AND s.SIT_SITE_ID IN UNNEST(['MLC', 'MLA', 'MLB', 'MLM', 'MCO', 'MPE', 'MLU', 'MEC'])
     GROUP BY ALL
 ),
@@ -90,11 +94,11 @@ SESSION_PLAY AS (
     GROUP BY ALL
 ),
 
--- CTE de Agregación Diaria (Ajustada para ser la única base)
-BASE_MPLAY_DAILY AS (
+-- CTE de Agregación Semanal (Agregando al nivel WEEK_ID)
+BASE_MPLAY_WEEKLY AS (
     SELECT
-        'DAILY' AS timeframe_type,
-        s.DS AS timeframe_id, -- El DS es el ID para la carga diaria
+        'WEEKLY' AS timeframe_type,
+        DATE_TRUNC(s.DS, WEEK(MONDAY)) AS timeframe_id, -- El WEEK_ID de la semana pasada es el ID
         s.sit_site_id,
         DATE_TRUNC(s.DS, MONTH) AS MONTH_ID,
         DATE_TRUNC(s.DS, WEEK(MONDAY)) AS WEEK_ID,
@@ -126,16 +130,15 @@ BASE_MPLAY_DAILY AS (
         ON COALESCE(s.FIRST_EVENT_SOURCE, 'NULL') = COALESCE(oc.SOURCE_TYPE, 'NULL')
     GROUP BY
         s.sit_site_id,
-        s.DS,
-        MONTH_ID,
         WEEK_ID,
+        MONTH_ID,
         Origin,
         User_Classification,
         PLATFORM,
         TEAM
 )
 
--- Consulta Final de Inserción (Solo la base DAILY)
+-- Consulta Final de Inserción
 SELECT
     b.timeframe_type,
     b.timeframe_id,
@@ -157,6 +160,6 @@ SELECT
     b.Visitors,
     b.Valid_Visitors,
     b.Viewers
-FROM BASE_MPLAY_DAILY b
+FROM BASE_MPLAY_WEEKLY b
 LEFT JOIN `meli-sbox.MPLAY.CLASIFICATION_ORIGINS` o
     ON b.Origin = o.origin;
