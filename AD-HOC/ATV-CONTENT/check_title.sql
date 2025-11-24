@@ -1,0 +1,57 @@
+-- CTE 1: Base de TODOS los plays calificados (>= 20s) en el período
+WITH QualifiedPlays AS (
+  SELECT
+    P.CUS_CUST_ID,
+    P.DS,
+    P.PLAYBACK_TIME_MILLISECONDS,
+    P.CHANNEL_ID,
+    C.TITLE_ADJUSTED,
+    C.CONTENT_TYPE,
+    C.CONTENT_PROVIDER
+  FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS` P
+  LEFT JOIN `meli-bi-data.WHOWNER.LK_MKT_MPLAY_CATALOGUE` C 
+    ON P.SIT_SITE_ID = C.SIT_SITE_ID
+    AND P.CONTENT_ID = C.CONTENT_ID
+  WHERE P.DS BETWEEN '2025-07-01' AND '2025-10-31'
+    -- EL FILTRO DE 20 SEGUNDOS SE APLICA AQUÍ, AL INICIO
+    AND P.PLAYBACK_TIME_MILLISECONDS >= 20000
+),
+
+-- CTE 2: Definir la cohorte (Viewers de Deadly Honeymoon en Oct)
+-- Esta CTE ahora lee de QualifiedPlays, asegurando que son "viewers" reales.
+Deadly_Oct_Viewers AS (
+  SELECT DISTINCT
+    CUS_CUST_ID
+  FROM QualifiedPlays
+  WHERE DATE_TRUNC(DS, MONTH) = '2025-10-01'
+    AND TITLE_ADJUSTED = 'Deadly Honeymoon'
+)
+
+-- Paso 3: Traer el historial COMPLETO (y calificado) de esa cohorte
+SELECT
+  Q.CUS_CUST_ID,
+  DATE_TRUNC(Q.DS, MONTH) AS view_month,
+  Q.TITLE_ADJUSTED,
+  
+  -- Ya no necesitamos el IF(), porque todo en QualifiedPlays es >= 20s
+  SAFE_DIVIDE(SUM(Q.PLAYBACK_TIME_MILLISECONDS), 60000) AS TVM,
+  
+  Q.CONTENT_TYPE,
+  CASE WHEN Q.CONTENT_TYPE = 'MOVIE' THEN 'MOVIE' ELSE 'SERIE' END AS CONTENT_TYPE_AJUSTADO,
+  Q.CONTENT_PROVIDER,
+  CASE
+    WHEN Q.CONTENT_PROVIDER = 'SONY' THEN 'SONY'
+    WHEN Q.CONTENT_PROVIDER IN ('PARAMOUNT', 'CBS','PARAMOUNTTL','PARAMOUNBR') THEN 'PARAMOUNT'
+    WHEN Q.CONTENT_PROVIDER = 'MPLAYORIGINALS' THEN 'MPLAYORIGINALS'
+    WHEN Q.CONTENT_PROVIDER IN ('NBCUAVOD', 'UNIVERSALPLUS') OR Q.CHANNEL_ID IN ('3062aa4b18ff46ed8d59fe6c3f088bc6','167e27fd5bb84dfabde7103648b9a96b','3f1cc2cccea34b9490b00d6ac514e225','63b08af757040aebdb2d23246fcf71a','9e95f70f53e54e3b86850c2d9a7b1df5','24d27534ed76db','bb853ee1e9264f018031baab6ea1e3d2') THEN 'NBCU'
+    ELSE Q.CONTENT_PROVIDER 
+  END AS CONTENT_PROVIDER_AJUSTADO
+FROM QualifiedPlays Q
+INNER JOIN Deadly_Oct_Viewers D
+  ON Q.CUS_CUST_ID = D.CUS_CUST_ID
+GROUP BY 1, 2, 3, 5, 6, 7, 8
+ORDER BY
+  Q.CUS_CUST_ID,
+  view_month;
+
+-- por cust_id se fija que titulos vio en cada mes y cuanto tvm de ese titulo
