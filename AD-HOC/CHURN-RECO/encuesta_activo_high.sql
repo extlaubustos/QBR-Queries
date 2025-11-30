@@ -1,7 +1,7 @@
 with USER_MONTHS AS (
         SELECT 
         SN.SIT_SITE_ID,
-        SN.USER_ID,
+        SN.USER_ID,z
 --        SN.LAST_SESSION_PLAY_CONTENT_ID,
         UM.TYPE_USER,
         UM.SEGMENT_LIFE_CYCLE,

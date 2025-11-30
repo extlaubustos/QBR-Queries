@@ -29,17 +29,17 @@ base_manual as (
     NPS_REL_CUS_CUST_ID, SIT_SITE_ID, NPS_REL_QUALTRICS_RESPONSE_ID, AWARENESS, NOTA_NPS, NPS, 
     -- Motivos de promoción (Solo para promotores NPS = 1)
     case 
-      when MPROM = ' A plataforma é muito completa' then 'La plataforma es muy completa' 
-      when MPROM = 'La plataforma es muy completa' then 'La plataforma es muy completa'
-      when MPROM = 'A variedade do conteúdo é ótima' then 'La variedad de contenido es muy buena' 
-      when MPROM = 'La variedad de contenido es muy buena' then 'La variedad de contenido es muy buena'
-      when MPROM = 'A plataforma é fácil de usar' then 'Es fácil de usar' 
-      when MPROM = 'Es fácil de usar' then 'Es fácil de usar'
-      when MPROM = 'Ótima qualidade de imagem e de conteúdo' then 'La calidad de imagen del contenido es muy bueno' 
-      when MPROM = 'La calidad de imagen del contenido es muy bueno' then 'La calidad de imagen del contenido es muy bueno'
-      when MPROM = 'O fato de ser uma plataforma grátis' then 'Que es gratuito' 
-      when MPROM = 'Que es gratuito' then 'Que es gratuito'
-    ELSE 'Otros' end as MPROM,
+      when MPROM = ' A plataforma é muito completa' then 'Complete platform' 
+      when MPROM = 'La plataforma es muy completa' then 'Complete platform'
+      when MPROM = 'A variedade do conteúdo é ótima' then 'Content variety' 
+      when MPROM = 'La variedad de contenido es muy buena' then 'Content variety'
+      when MPROM = 'A plataforma é fácil de usar' then 'Easy to use' 
+      when MPROM = 'Es fácil de usar' then 'Easy to use'
+      when MPROM = 'Ótima qualidade de imagem e de conteúdo' then 'Good image quality' 
+      when MPROM = 'La calidad de imagen del contenido es muy bueno' then 'Good image quality'
+      when MPROM = 'O fato de ser uma plataforma grátis' then 'It¿' 
+      when MPROM = 'Que es gratuito' then 'It¿'
+    ELSE 'Other' end as MPROM,
     MPROM as MPROM_DETALLE, 
     -- CSAT: Satisfacción con cada variable. Disponible para promotores, neutros y detractores
     CSAT_VARIEDAD, 
@@ -50,79 +50,80 @@ base_manual as (
     SAT_VARIEDAD,
     --  Motivos de insatisfacción cuando están disconformes con variedad (CSAT_VARIEDAD 1 a 3)
     case 
-      when INSAT_VARIEDAD = ' La película/serie que buscaba no estaba' then ' La película/serie que buscaba no estaba' 
-      when INSAT_VARIEDAD = 'O filme/série que eu queria ver não estava disponível' then ' La película/serie que buscaba no estaba'
-      when INSAT_VARIEDAD = 'El catálogo está desactualizado' then 'El catálogo está desactualizado' 
-      when INSAT_VARIEDAD = 'O catálogo está desatualizado' then 'El catálogo está desactualizado'
-      when INSAT_VARIEDAD = 'El catálogo no es atractivo' then 'El catálogo no es atractivo' 
-      when INSAT_VARIEDAD = 'O catálogo não é atrativo' then 'El catálogo no es atractivo'
-      when INSAT_VARIEDAD = 'La serie no estaba completa' then 'La serie no estaba completa' 
-      when INSAT_VARIEDAD = 'A série estava incompleta' then 'La serie no estaba completa'
-      when INSAT_VARIEDAD = 'Me quitaron la serie y no había terminado de verla' then 'Me quitaron la serie y no había terminado de verla'
-      when INSAT_VARIEDAD = 'A série ficou indisponível e eu não tinha terminado de assisti-la.' then 'Me quitaron la serie y no había terminado de verla' 
-    ELSE 'Otros' end as INSAT_VARIEDAD,
+      when INSAT_VARIEDAD = ' La película/serie que buscaba no estaba' then 'What I was looking for was not there' 
+      when INSAT_VARIEDAD = 'O filme/série que eu queria ver não estava disponível' then 'What I was looking for was not there'
+      when INSAT_VARIEDAD = 'El catálogo está desactualizado' then 'Outdated catalog' 
+      when INSAT_VARIEDAD = 'O catálogo está desatualizado' then 'Outdated catalog'
+      when INSAT_VARIEDAD = 'El catálogo no es atractivo' then 'Unattractive catalog' 
+      when INSAT_VARIEDAD = 'O catálogo não é atrativo' then 'Unattractive catalog'
+      when INSAT_VARIEDAD = 'La serie no estaba completa' then 'Incomplete series' 
+      when INSAT_VARIEDAD = 'A série estava incompleta' then 'Incomplete series'
+      when INSAT_VARIEDAD = 'Me quitaron la serie y no había terminado de verla' then 'Content removed'
+      when INSAT_VARIEDAD = 'A série ficou indisponível e eu não tinha terminado de assisti-la.' then 'Content removed' 
+    ELSE 'Other' end as INSAT_VARIEDAD,
     INSAT_VARIEDAD AS DETALLE_INSAT_VARIEDAD,
     INSAT_TIPO_VARIEDAD,
     --  Motivos de insatisfacción cuando están disconformes con publicidad (CSAT_PUBLICIDAD 1 a 3)
     case 
-      when INSAT_PUBLICIDAD = 'La frecuencia de la publicidad es excesiva' then 'La frecuencia de la publicidad es excesiva' 
-      when INSAT_PUBLICIDAD = 'Há muitas propagandas' then 'La frecuencia de la publicidad es excesiva'
-      when INSAT_PUBLICIDAD = 'La publicidad corta en momentos claves del contenido' then 'La publicidad corta en momentos claves del contenido' when INSAT_PUBLICIDAD = 'As propagandas interrompem o conteúdo em momentos importantes' then 'La publicidad corta en momentos claves del contenido'
-      when INSAT_PUBLICIDAD = 'La publicidad es siempre la misma' then 'La publicidad es siempre la misma' 
-      when INSAT_PUBLICIDAD = 'As propagandas são sempre as mesmas' then 'La publicidad es siempre la misma'
-      when INSAT_PUBLICIDAD = 'La publicidad no se alinea a mis intereses' then 'La publicidad no se alinea a mis intereses'
-      when INSAT_PUBLICIDAD = 'As propagandas não têm a ver com meus interesses' then 'La publicidad no se alinea a mis intereses'
-      when INSAT_PUBLICIDAD = 'La publicidad me agotó y no terminé de ver el contenido' then 'La publicidad me agotó y no terminé de ver el contenido' 
-      when INSAT_PUBLICIDAD = 'As propagandas me cansaram e não terminei de ver o conteúdo' then 'La publicidad me agotó y no terminé de ver el contenido'
-      when INSAT_PUBLICIDAD = 'Desearía pagar una suscripción para evitar la publicidad' then 'Desearía pagar una suscripción para evitar la publicidad' 
-      when INSAT_PUBLICIDAD = 'Gostaria de pagar uma assinatura para evitar propagandas' then 'Desearía pagar una suscripción para evitar la publicidad' 
-    ELSE 'Otros' end as INSAT_PUBLICIDAD,
+      when INSAT_PUBLICIDAD = 'La frecuencia de la publicidad es excesiva' then 'Too many ads' 
+      when INSAT_PUBLICIDAD = 'Há muitas propagandas' then 'Too many ads'
+      when INSAT_PUBLICIDAD = 'La publicidad corta en momentos claves del contenido' then 'Interrupts at key moments' 
+      when INSAT_PUBLICIDAD = 'As propagandas interrompem o conteúdo em momentos importantes' then 'Interrupts at key moments'
+      when INSAT_PUBLICIDAD = 'La publicidad es siempre la misma' then 'Same ads repeatdly' 
+      when INSAT_PUBLICIDAD = 'As propagandas são sempre as mesmas' then 'Same ads repeatdly'
+      when INSAT_PUBLICIDAD = 'La publicidad no se alinea a mis intereses' then 'Not relevant to me'
+      when INSAT_PUBLICIDAD = 'As propagandas não têm a ver com meus interesses' then 'Not relevant to me'
+      when INSAT_PUBLICIDAD = 'La publicidad me agotó y no terminé de ver el contenido' then 'Made me stop watching' 
+      when INSAT_PUBLICIDAD = 'As propagandas me cansaram e não terminei de ver o conteúdo' then 'Made me stop watching'
+      when INSAT_PUBLICIDAD = 'Desearía pagar una suscripción para evitar la publicidad' then 'I want a subscription' 
+      when INSAT_PUBLICIDAD = 'Gostaria de pagar uma assinatura para evitar propagandas' then 'I want a subscription' 
+    ELSE 'Other' end as INSAT_PUBLICIDAD,
     INSAT_PUBLICIDAD AS DETALLE_INSAT_PUBLICIDAD,
     --  Motivos de insatisfacción cuando están disconformes con facilidad de uso (CSAT_FACILIDAD 1 a 3)
     case 
-      when INSAT_FACILIDAD  = 'No puedo transmitir mi contenido a un Smart TV' then 'No puedo transmitir mi contenido a un Smart TV' 
-      when INSAT_FACILIDAD  = 'Não consigo transmitir o conteúdo em uma Smart TV' then 'No puedo transmitir mi contenido a un Smart TV'
-      when INSAT_FACILIDAD  = 'No puedo hacer mi lista de favoritos/pendientes para ver' then 'No puedo hacer mi lista de favoritos/pendientes para ver' 
-      when INSAT_FACILIDAD  = 'Não consigo criar minha lista de favoritos/próximos conteúdos para assistir' then 'No puedo hacer mi lista de favoritos/pendientes para ver'
-      when INSAT_FACILIDAD  = 'La búsqueda del contenido para ver no es práctica' then 'La búsqueda del contenido para ver no es práctica'
-      when INSAT_FACILIDAD  = 'Não é fácil buscar o conteúdo que quero ver' then 'La búsqueda del contenido para ver no es práctica'
-      when INSAT_FACILIDAD  = 'La navegación en la plataforma no es didáctica' then 'La navegación en la plataforma no es didáctica' 
-      when INSAT_FACILIDAD  = 'A navegação na plataforma é complicada' then 'La navegación en la plataforma no es didáctica'
-      when INSAT_FACILIDAD  = 'La configuración de los subtítulos es limitada' then 'La configuración de los subtítulos es limitada' 
-      when INSAT_FACILIDAD  = 'As configurações das legendas são limitadas' then 'La configuración de los subtítulos es limitada'
-      when INSAT_FACILIDAD  = 'No figura el idioma en que quiero ver el contenido' then 'No figura el idioma en que quiero ver el contenido' 
-      when INSAT_FACILIDAD = 'O idioma no qual quero assistir o conteúdo não está disponível' then 'No figura el idioma en que quiero ver el contenido' 
-    ELSE 'Otros' end as INSAT_FACILIDAD,
+      when INSAT_FACILIDAD  = 'No puedo transmitir mi contenido a un Smart TV' then 'Difficulty casting on TV' 
+      when INSAT_FACILIDAD  = 'Não consigo transmitir o conteúdo em uma Smart TV' then 'Difficulty casting on TV'
+      when INSAT_FACILIDAD  = 'No puedo hacer mi lista de favoritos/pendientes para ver' then 'Cannot create favorites list' 
+      when INSAT_FACILIDAD  = 'Não consigo criar minha lista de favoritos/próximos conteúdos para assistir' then 'Cannot create favorites list'
+      when INSAT_FACILIDAD  = 'La búsqueda del contenido para ver no es práctica' then 'Search not practical'
+      when INSAT_FACILIDAD  = 'Não é fácil buscar o conteúdo que quero ver' then 'Search not practical'
+      when INSAT_FACILIDAD  = 'La navegación en la plataforma no es didáctica' then 'Navigation not intuitive' 
+      when INSAT_FACILIDAD  = 'A navegação na plataforma é complicada' then 'Navigation not intuitive'
+      when INSAT_FACILIDAD  = 'La configuración de los subtítulos es limitada' then 'Limited subtitle settings' 
+      when INSAT_FACILIDAD  = 'As configurações das legendas são limitadas' then 'Limited subtitle settings'
+      when INSAT_FACILIDAD  = 'No figura el idioma en que quiero ver el contenido' then 'Desired language not available' 
+      when INSAT_FACILIDAD = 'O idioma no qual quero assistir o conteúdo não está disponível' then 'Desired language not available' 
+    ELSE 'Other' end as INSAT_FACILIDAD,
     INSAT_FACILIDAD as DETALLE_INSTAT_FACILIDAD,
     --  Motivos de insatisfacción cuando están disconformes con funcionamiento (CSAT_FUNCIONAMIENTO 1 a 3)
     case 
-      when INSAT_FUNCIONAMIENTO  = 'Demora de carga al momento de los comerciales' then 'Demora de carga al momento de los comerciales' 
-      when INSAT_FUNCIONAMIENTO  = 'O conteúdo demora para carregar quando as propagandas são transmitidas' then 'Demora de carga al momento de los comerciales'
-      when INSAT_FUNCIONAMIENTO  = 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre' then 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre' 
-      when INSAT_FUNCIONAMIENTO  = 'A plataforma sai do ar quando tento voltar ao menu principal ou para o Mercado Livre' then 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre'
-      when INSAT_FUNCIONAMIENTO  = 'Tengo desfasaje de volumen mientras miro el contenido' then 'Tengo desfasaje de volumen mientras miro el contenido' 
-      when INSAT_FUNCIONAMIENTO  = 'Há instabilidade no volume enquanto estou assistindo ao conteúdo' then 'Tengo desfasaje de volumen mientras miro el contenido'
-      when INSAT_FUNCIONAMIENTO  = 'No me permite ver el contenido a pantalla completa' then 'No me permite ver el contenido a pantalla completa' 
-      when INSAT_FUNCIONAMIENTO  = 'Não consigo ver o conteúdo em tela cheia' then 'No me permite ver el contenido a pantalla completa'
-      when INSAT_FUNCIONAMIENTO  = 'Mala calidad de imagen del contenido' then 'Mala calidad de imagen del contenido' 
-      when INSAT_FUNCIONAMIENTO  = 'A imagem é de baixa qualidade' then 'Mala calidad de imagen del contenido' 
-    ELSE 'Otros' end as INSAT_FUNCIONAMIENTO,
+      when INSAT_FUNCIONAMIENTO  = 'Demora de carga al momento de los comerciales' then 'Delay during commercial' 
+      when INSAT_FUNCIONAMIENTO  = 'O conteúdo demora para carregar quando as propagandas são transmitidas' then 'Delay during commercial'
+      when INSAT_FUNCIONAMIENTO  = 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre' then 'App exits unexpectedly' 
+      when INSAT_FUNCIONAMIENTO  = 'A plataforma sai do ar quando tento voltar ao menu principal ou para o Mercado Livre' then 'App exits unexpectedly'
+      when INSAT_FUNCIONAMIENTO  = 'Tengo desfasaje de volumen mientras miro el contenido' then 'Audio/video out of sync' 
+      when INSAT_FUNCIONAMIENTO  = 'Há instabilidade no volume enquanto estou assistindo ao conteúdo' then 'Audio/video out of sync'
+      when INSAT_FUNCIONAMIENTO  = 'No me permite ver el contenido a pantalla completa' then 'Cannot view full screen' 
+      when INSAT_FUNCIONAMIENTO  = 'Não consigo ver o conteúdo em tela cheia' then 'Cannot view full screen'
+      when INSAT_FUNCIONAMIENTO  = 'Mala calidad de imagen del contenido' then 'Poor image quality' 
+      when INSAT_FUNCIONAMIENTO  = 'A imagem é de baixa qualidade' then 'Poor image quality' 
+    ELSE 'Other' end as INSAT_FUNCIONAMIENTO,
     INSAT_FUNCIONAMIENTO AS DETALLE_INSAT_FUNCIONAMIENTO,
     --  Motivos de insatisfacción cuando están disconformes con recomendaciones (CSAT_RECOMENDACIONES 1 a 3)
     case 
-      when INSAT_RECOMENDACIONES = 'Me notifican contenido que no es de mis preferencias' then 'Me notifican contenido que no es de mis preferencias' 
-      when INSAT_RECOMENDACIONES  = 'Recebo notificações que não têm a ver com as minhas preferências' then 'Me notifican contenido que no es de mis preferencias'
-      when INSAT_RECOMENDACIONES  = 'Las notificaciones son demasiadas' then 'Las notificaciones son demasiadas' 
-      when INSAT_RECOMENDACIONES  = 'Recebo muitas notificações' then 'Las notificaciones son demasiadas'
-      when INSAT_RECOMENDACIONES  = 'Me notifican contenido que luego debo pagar para verlo' then 'Me notifican contenido que luego debo pagar para verlo' 
-      when INSAT_RECOMENDACIONES = 'Recebo notificações de conteúdos pagos' then 'Me notifican contenido que luego debo pagar para verlo'
-      when INSAT_RECOMENDACIONES  = 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas' then 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas' 
-      when INSAT_RECOMENDACIONES  = 'Só acessei a plataforma para conhecê-la e agora recebo muitas notificações' then 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas'
-      when INSAT_RECOMENDACIONES  = 'Las notificaciones llegan en horario inadecuado' then 'Las notificaciones llegan en horario inadecuado' 
-      when INSAT_RECOMENDACIONES  = 'As notificações chegam em horários inadequados' then 'Las notificaciones llegan en horario inadecuado'
-      when INSAT_RECOMENDACIONES  = 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' then 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' 
-      when INSAT_RECOMENDACIONES  = 'Recebo notificações em canais que não escolhi. Por favor, indique quais são esses canais.' then 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' 
-    ELSE 'Otros' end as INSAT_RECOMENDACIONES,
+      when INSAT_RECOMENDACIONES = 'Me notifican contenido que no es de mis preferencias' then 'Notifications not of interest' 
+      when INSAT_RECOMENDACIONES  = 'Recebo notificações que não têm a ver com as minhas preferências' then 'Notifications not of interest'
+      when INSAT_RECOMENDACIONES  = 'Las notificaciones son demasiadas' then 'Too many notifications' 
+      when INSAT_RECOMENDACIONES  = 'Recebo muitas notificações' then 'Too many notifications'
+      when INSAT_RECOMENDACIONES  = 'Me notifican contenido que luego debo pagar para verlo' then 'Paid-content notifications' 
+      when INSAT_RECOMENDACIONES = 'Recebo notificações de conteúdos pagos' then 'Paid-content notifications'
+      when INSAT_RECOMENDACIONES  = 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas' then 'Just logged in - too many notifications' 
+      when INSAT_RECOMENDACIONES  = 'Só acessei a plataforma para conhecê-la e agora recebo muitas notificações' then 'Just logged in - too many notifications'
+      when INSAT_RECOMENDACIONES  = 'Las notificaciones llegan en horario inadecuado' then 'Notifications at inappropriate times' 
+      when INSAT_RECOMENDACIONES  = 'As notificações chegam em horários inadequados' then 'Notifications at inappropriate times'
+      when INSAT_RECOMENDACIONES  = 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' then 'Notifications from undesired channels' 
+      when INSAT_RECOMENDACIONES  = 'Recebo notificações em canais que não escolhi. Por favor, indique quais são esses canais.' then 'Notifications from undesired channels' 
+    ELSE 'Other' end as INSAT_RECOMENDACIONES,
     INSAT_RECOMENDACIONES AS DETALLE_INSAT_RECOMENDACIONES,
     RESPONDE_ADICIONALES,
     PLATAFORMAS,
@@ -168,17 +169,17 @@ base_auto as (
     END AS NPS,
     -- Motivos de promoción (Solo para promotores NPS = 1)
     case 
-      when NPS_REL_MPROM = ' A plataforma é muito completa' then 'La plataforma es muy completa' 
-      when NPS_REL_MPROM = 'La plataforma es muy completa' then 'La plataforma es muy completa'
-      when NPS_REL_MPROM = 'A variedade do conteúdo é ótima' then 'La variedad de contenido es muy buena' 
-      when NPS_REL_MPROM = 'La variedad de contenido es muy buena' then 'La variedad de contenido es muy buena'
-      when NPS_REL_MPROM = 'A plataforma é fácil de usar' then 'Es fácil de usar' 
-      when NPS_REL_MPROM = 'Es fácil de usar' then 'Es fácil de usar'
-      when NPS_REL_MPROM = 'Ótima qualidade de imagem e de conteúdo' then 'La calidad de imagen del contenido es muy bueno' 
-      when NPS_REL_MPROM = 'La calidad de imagen del contenido es muy bueno' then 'La calidad de imagen del contenido es muy bueno'
-      when NPS_REL_MPROM = 'O fato de ser uma plataforma grátis' then 'Que es gratuito' 
-      when NPS_REL_MPROM = 'Que es gratuito' then 'Que es gratuito'
-    ELSE 'Otros' end as MPROM,
+      when NPS_REL_MPROM = ' A plataforma é muito completa' then 'Complete platform' 
+      when NPS_REL_MPROM = 'La plataforma es muy completa' then 'Complete platform'
+      when NPS_REL_MPROM = 'A variedade do conteúdo é ótima' then 'Content variety' 
+      when NPS_REL_MPROM = 'La variedad de contenido es muy buena' then 'Content variety'
+      when NPS_REL_MPROM = 'A plataforma é fácil de usar' then 'Easy to use' 
+      when NPS_REL_MPROM = 'Es fácil de usar' then 'Easy to use'
+      when NPS_REL_MPROM = 'Ótima qualidade de imagem e de conteúdo' then 'Good image quality' 
+      when NPS_REL_MPROM = 'La calidad de imagen del contenido es muy bueno' then 'Good image quality'
+      when NPS_REL_MPROM = 'O fato de ser uma plataforma grátis' then 'It¿' 
+      when NPS_REL_MPROM = 'Que es gratuito' then 'It¿'
+    ELSE 'Other' end as MPROM,
     NPS_REL_MPROM as MPROM_DETALLE, 
     -- CSAT: Satisfacción con cada variable. Disponible para promotores, neutros y detractores
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_VARIEDAD') as CSAT_VARIEDAD,
@@ -189,80 +190,80 @@ base_auto as (
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_SAT_VARIEDAD') as SAT_VARIEDAD,
     --  Motivos de insatisfacción cuando están disconformes con variedad (CSAT_VARIEDAD 1 a 3)
     case 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = ' La película/serie que buscaba no estaba' then ' La película/serie que buscaba no estaba' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'O filme/série que eu queria ver não estava disponível' then ' La película/serie que buscaba no estaba'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'El catálogo está desactualizado' then 'El catálogo está desactualizado' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'O catálogo está desatualizado' then 'El catálogo está desactualizado'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'El catálogo no es atractivo' then 'El catálogo no es atractivo' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'O catálogo não é atrativo' then 'El catálogo no es atractivo'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'La serie no estaba completa' then 'La serie no estaba completa' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'A série estava incompleta' then 'La serie no estaba completa'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'Me quitaron la serie y no había terminado de verla' then 'Me quitaron la serie y no había terminado de verla' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'A série ficou indisponível e eu não tinha terminado de assisti-la.' then 'Me quitaron la serie y no había terminado de verla' 
-    ELSE 'Otros' end as INSAT_VARIEDAD,
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = ' La película/serie que buscaba no estaba' then 'What I was looking for was not there' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'O filme/série que eu queria ver não estava disponível' then 'What I was looking for was not there'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'El catálogo está desactualizado' then 'Outdated catalog' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'O catálogo está desatualizado' then 'Outdated catalog'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'El catálogo no es atractivo' then 'Unattractive catalog' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'O catálogo não é atrativo' then 'Unattractive catalog'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'La serie no estaba completa' then 'Serie incompleta' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'A série estava incompleta' then 'Serie incompleta'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'Me quitaron la serie y no había terminado de verla' then 'Quitaron el contenido' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') = 'A série ficou indisponível e eu não tinha terminado de assisti-la.' then 'Quitaron el contenido' 
+    ELSE 'Other' end as INSAT_VARIEDAD,
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_VARIEDAD') as DETALLE_INSAT_VARIEDAD,
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_TIPO_VARIEDAD') as INSAT_TIPO_VARIEDAD,
     --  Motivos de insatisfacción cuando están disconformes con publicidad (CSAT_PUBLICIDAD 1 a 3)
     case 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La frecuencia de la publicidad es excesiva' then 'La frecuencia de la publicidad es excesiva' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'Há muitas propagandas' then 'La frecuencia de la publicidad es excesiva'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad corta en momentos claves del contenido' then 'La publicidad corta en momentos claves del contenido' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas interrompem o conteúdo em momentos importantes' then 'La publicidad corta en momentos claves del contenido'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad es siempre la misma' then 'La publicidad es siempre la misma' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas são sempre as mesmas' then 'La publicidad es siempre la misma'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad no se alinea a mis intereses' then 'La publicidad no se alinea a mis intereses' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas não têm a ver com meus interesses' then 'La publicidad no se alinea a mis intereses'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad me agotó y no terminé de ver el contenido' then 'La publicidad me agotó y no terminé de ver el contenido' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas me cansaram e não terminei de ver o conteúdo' then 'La publicidad me agotó y no terminé de ver el contenido'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'Desearía pagar una suscripción para evitar la publicidad' then 'Desearía pagar una suscripción para evitar la publicidad' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'Gostaria de pagar uma assinatura para evitar propagandas' then 'Desearía pagar una suscripción para evitar la publicidad' 
-    ELSE 'Otros' end as INSAT_PUBLICIDAD,
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La frecuencia de la publicidad es excesiva' then 'Too many ads' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'Há muitas propagandas' then 'Too many ads'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad corta en momentos claves del contenido' then 'Interrupts at key moments' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas interrompem o conteúdo em momentos importantes' then 'Interrupts at key moments'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad es siempre la misma' then 'Same ads repeatdly' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas são sempre as mesmas' then 'Same ads repeatdly'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad no se alinea a mis intereses' then 'Not relevant to me' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas não têm a ver com meus interesses' then 'Not relevant to me'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'La publicidad me agotó y no terminé de ver el contenido' then 'Made me stop watching' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'As propagandas me cansaram e não terminei de ver o conteúdo' then 'Made me stop watching'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'Desearía pagar una suscripción para evitar la publicidad' then 'I want a subscription' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') = 'Gostaria de pagar uma assinatura para evitar propagandas' then 'I want a subscription' 
+    ELSE 'Other' end as INSAT_PUBLICIDAD,
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_PUBLICIDAD') as DETALLE_INSAT_PUBLICIDAD,
     --  Motivos de insatisfacción cuando están disconformes con facilidad de uso (CSAT_FACILIDAD 1 a 3)
     case 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'No puedo transmitir mi contenido a un Smart TV' then 'No puedo transmitir mi contenido a un Smart TV' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'Não consigo transmitir o conteúdo em uma Smart TV' then 'No puedo transmitir mi contenido a un Smart TV'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'No puedo hacer mi lista de favoritos/pendientes para ver' then 'No puedo hacer mi lista de favoritos/pendientes para ver' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'Não consigo criar minha lista de favoritos/próximos conteúdos para assistir' then 'No puedo hacer mi lista de favoritos/pendientes para ver'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'La búsqueda del contenido para ver no es práctica' then 'La búsqueda del contenido para ver no es práctica' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'Não é fácil buscar o conteúdo que quero ver' then 'La búsqueda del contenido para ver no es práctica'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'La navegación en la plataforma no es didáctica' then 'La navegación en la plataforma no es didáctica' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'A navegação na plataforma é complicada' then 'La navegación en la plataforma no es didáctica'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'La configuración de los subtítulos es limitada' then 'La configuración de los subtítulos es limitada' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'As configurações das legendas são limitadas' then 'La configuración de los subtítulos es limitada'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'No figura el idioma en que quiero ver el contenido' then 'No figura el idioma en que quiero ver el contenido' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'O idioma no qual quero assistir o conteúdo não está disponível' then 'No figura el idioma en que quiero ver el contenido' 
-    ELSE 'Otros' end as INSAT_FACILIDAD,
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'No puedo transmitir mi contenido a un Smart TV' then 'Difficulty casting on TV' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'Não consigo transmitir o conteúdo em uma Smart TV' then 'Difficulty casting on TV'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'No puedo hacer mi lista de favoritos/pendientes para ver' then 'Cannot create favorites list' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'Não consigo criar minha lista de favoritos/próximos conteúdos para assistir' then 'Cannot create favorites list'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'La búsqueda del contenido para ver no es práctica' then 'Search not practical' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'Não é fácil buscar o conteúdo que quero ver' then 'Search not practical'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'La navegación en la plataforma no es didáctica' then 'Navigation not intuitive' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'A navegação na plataforma é complicada' then 'Navigation not intuitive'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'La configuración de los subtítulos es limitada' then 'Limited subtitle settings' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'As configurações das legendas são limitadas' then 'Limited subtitle settings'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'No figura el idioma en que quiero ver el contenido' then 'Desired language not available' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD')  = 'O idioma no qual quero assistir o conteúdo não está disponível' then 'Desired language not available' 
+    ELSE 'Other' end as INSAT_FACILIDAD,
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FACILIDAD') as DETALLE_INSAT_FACILIDAD,
     --  Motivos de insatisfacción cuando están disconformes con funcionamiento (CSAT_FUNCIONAMIENTO 1 a 3)
     case 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Demora de carga al momento de los comerciales' then 'Demora de carga al momento de los comerciales' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'O conteúdo demora para carregar quando as propagandas são transmitidas' then 'Demora de carga al momento de los comerciales'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre' then 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'A plataforma sai do ar quando tento voltar ao menu principal ou para o Mercado Livre' then 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Tengo desfasaje de volumen mientras miro el contenido' then 'Tengo desfasaje de volumen mientras miro el contenido' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Há instabilidade no volume enquanto estou assistindo ao conteúdo' then 'Tengo desfasaje de volumen mientras miro el contenido'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'No me permite ver el contenido a pantalla completa' then 'No me permite ver el contenido a pantalla completa' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Não consigo ver o conteúdo em tela cheia' then 'No me permite ver el contenido a pantalla completa'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Mala calidad de imagen del contenido' then 'Mala calidad de imagen del contenido' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'A imagem é de baixa qualidade' then 'Mala calidad de imagen del contenido' 
-    ELSE 'Otros' end as INSAT_FUNCIONAMIENTO,
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Demora de carga al momento de los comerciales' then 'Delay during commercial' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'O conteúdo demora para carregar quando as propagandas são transmitidas' then 'Delay during commercial'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'La plataforma se sale al intentar volver al menú principal o a Mercado Libre' then 'App exits unexpectedly' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'A plataforma sai do ar quando tento voltar ao menu principal ou para o Mercado Livre' then 'App exits unexpectedly'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Tengo desfasaje de volumen mientras miro el contenido' then 'Audio/video out of sync' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Há instabilidade no volume enquanto estou assistindo ao conteúdo' then 'Audio/video out of sync'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'No me permite ver el contenido a pantalla completa' then 'Cannot view full screen' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Não consigo ver o conteúdo em tela cheia' then 'Cannot view full screen'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'Mala calidad de imagen del contenido' then 'Poor image quality' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO')  = 'A imagem é de baixa qualidade' then 'Poor image quality' 
+    ELSE 'Other' end as INSAT_FUNCIONAMIENTO,
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_FUNCIONAMIENTO') as DETALLE_INSAT_FUNCIONAMIENTO,
     -- Motivos de insatisfacción cuando están disconformes con recomendaciones (CSAT_RECOMENDACIONES 1 a 3)
     case 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Me notifican contenido que no es de mis preferencias' then 'Me notifican contenido que no es de mis preferencias' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo notificações que não têm a ver com as minhas preferências' then 'Me notifican contenido que no es de mis preferencias'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Las notificaciones son demasiadas' then 'Las notificaciones son demasiadas' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo muitas notificações' then 'Las notificaciones son demasiadas'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Me notifican contenido que luego debo pagar para verlo' then 'Me notifican contenido que luego debo pagar para verlo' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo notificações de conteúdos pagos' then 'Me notifican contenido que luego debo pagar para verlo'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas' then 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Só acessei a plataforma para conhecê-la e agora recebo muitas notificações' then 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Las notificaciones llegan en horario inadecuado' then 'Las notificaciones llegan en horario inadecuado' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'As notificações chegam em horários inadequados' then 'Las notificaciones llegan en horario inadecuado'
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' then 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' 
-      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo notificações em canais que não escolhi. Por favor, indique quais são esses canais.' then 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' 
-    ELSE 'Otros' end as INSAT_RECOMENDACIONES,
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Me notifican contenido que no es de mis preferencias' then 'Notifications not of interest' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo notificações que não têm a ver com as minhas preferências' then 'Notifications not of interest'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Las notificaciones son demasiadas' then 'Too many notifications' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo muitas notificações' then 'Too many notifications'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Me notifican contenido que luego debo pagar para verlo' then 'Paid-content notifications' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo notificações de conteúdos pagos' then 'Paid-content notifications'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Sólo ingresé a ver la plataforma y ahora las notificaciones son demasiadas' then 'Just logged in - too many notifications' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Só acessei a plataforma para conhecê-la e agora recebo muitas notificações' then 'Just logged in - too many notifications'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Las notificaciones llegan en horario inadecuado' then 'Notifications at inappropriate times' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'As notificações chegam em horários inadequados' then 'Notifications at inappropriate times'
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Las notificaciones me llegan por canales que no deseo ¿cuáles?' then 'Notifications from undesired channels' 
+      when JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES')  = 'Recebo notificações em canais que não escolhi. Por favor, indique quais são esses canais.' then 'Notifications from undesired channels' 
+    ELSE 'Other' end as INSAT_RECOMENDACIONES,
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_CSAT_INSAT_RECOMENDACIONES') as DETALLE_INSAT_RECOMENDACIONES,
     -- Preguntas adicionales competitivo
     JSON_EXTRACT_SCALAR(NPS_REL_PARTICULAR_QUESTIONS,'$[0].NPS_REL_SEL_MPLAY_ADICIONALES') as RESPONDE_ADICIONALES,
