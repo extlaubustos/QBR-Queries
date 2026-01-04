@@ -1,3 +1,26 @@
+-- description: Análisis de migración semanal de usuarios entre plataformas de consumo, segmentado por recurrencia y nivel de consumo
+-- domain: behaviour
+-- product: mplay
+-- use_case: migration_analysis
+-- grain: week_id, site, platform_origin, migration_flow_destination, cust_type, tvm_timeframe, flag_log
+-- time_grain: weekly
+-- date_column: DS
+-- date_filter: up_to (hasta current_date - 1, con análisis desde 2025-01-01)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - TOTAL_USERS: usuarios únicos que migran, retienen plataforma o churnean entre semanas consecutivas
+-- dimensions:
+-- - PLATFORM_ORIGIN: plataforma principal del usuario en la semana origen
+-- - MIGRATION_FLOW_DESTINATION: destino de plataforma en W+1 (misma plataforma, otra plataforma o churn)
+-- - CUST_TYPE: clasificación de recurrencia (NEW, RETAINED, RECOVERED)
+-- - TVM_TIMEFRAME: bucket de minutos consumidos en la semana origen
+-- - FLAG_LOG: indicador de usuario logueado
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+-- - Derivación interna por USER_ID, SIT_SITE_ID y WEEK_ID (self join para W vs W+1)
+-- owner: data_team
+
 WITH NEW_RET_RECO AS
 (
     SELECT

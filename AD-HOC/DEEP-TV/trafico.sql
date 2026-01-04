@@ -1,3 +1,29 @@
+-- description: Sesiones de MPlay en dispositivos TV por sitio, plataforma y origen, con métricas de visitas y vistas válidas
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, device_platform, origin, day
+-- time_grain: day / week / month
+-- date_column: s.DS
+-- date_filter: between (date_from, date_to)
+-- threshold_rule:
+-- - playback_time >= 20s para considerar vista válida
+-- - visita válida cuando IS_BOUNCED = FALSE
+-- metrics:
+-- - SESSIONS: sesiones distintas
+-- - SESSIONS_VALID_VISIT: sesiones no rebotadas
+-- - SESSIONS_VALID_VIEW: sesiones con consumo >= 20s
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - SESSION.SIT_SITE_ID = PLAYS.SIT_SITE_ID
+-- - SESSION.USER_ID = PLAYS.USER_ID
+-- - SESSION.SESSION_ID = PLAYS.SESSION_ID
+-- - SESSION.FIRST_EVENT_SOURCE = ORIGIN.SOURCE_TYPE
+-- owner: data_team
+
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;
 DECLARE date_to DATE;

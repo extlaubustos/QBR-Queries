@@ -1,3 +1,21 @@
+-- description: Análisis de usuarios retenidos (RETAINED) y su comportamiento de consumo (TVM) segmentado por plataforma y franja horaria. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: retention analysis / audience profiling 
+-- grain: sit_site_id, ds, hour, cust_type, platform 
+-- time_grain: daily (aggregated by month in the final output) 
+-- date_column: DS (TIME_FRAME_ID) 
+-- date_filter: >= '2025-06-01' 
+-- threshold_rule: playback_time >= 20s 
+-- metrics: 
+-- - TVM_TOTAL: minutos totales reproducidos por usuarios retenidos 
+-- - TOTAL_USERS: cantidad de usuarios únicos retenidos 
+-- - FLAG_N_R: clasificación de usuario (NEW: primer play, RETAINED: play en <= 30 días, RECOVERED: play en > 30 días) 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - Self-join (CTE CRUCE_FLAG): Atribución del primer estado del usuario (FLAG_N_R) al resto de sus reproducciones dentro del mismo periodo. 
+-- owner: data_team
 WITH NEW_RET_RECO AS
   (
     SELECT 

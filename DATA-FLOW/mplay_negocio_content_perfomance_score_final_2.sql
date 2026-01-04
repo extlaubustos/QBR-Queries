@@ -1,3 +1,23 @@
+-- description: Identificación y métricas de títulos de mejor rendimiento (Best Titles) basados en usuarios de alto engagement y comportamiento de primer consumo 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: performance analysis / content strategy 
+-- grain: time_frame_id, flag_n_r_final, sit_site_id, flag_aha_moment, flag_engagement_percentile, content_type, title_adjusted 
+-- time_grain: time_frame_id (aggregated_period) 
+-- date_column: N/A (uses TIME_FRAME_ID) 
+-- date_filter: N/A 
+-- threshold_rule: engagement_percentile >= 0.80 (TVM_SHOWS or TVM_MOVIE), aha_moment >= 3 chapters 
+-- metrics: 
+-- - TOTAL_USERS: cantidad de usuarios únicos con alto compromiso (GREATER) 
+-- - TVM: minutos totales reproducidos por el grupo 
+-- - TVM_SHOWS: minutos reproducidos en series 
+-- - TVM_MOVIE: minutos reproducidos en películas 
+-- tables_read: 
+-- - meli-sbox.MPLAY.NEGOCIO_MPLAY_CONTENT_DATA_USER 
+-- joins: 
+-- - E.USER_ID = A.USER_ID AND E.SIT_SITE_ID = A.SIT_SITE_ID (Self-join para cruzar métricas de usuario con detalle de contenido) 
+-- owner: data_team
+
 -- Crea o reemplaza la tabla final con los títulos de mejor rendimiento
 CREATE OR REPLACE TABLE `meli-sbox.MPLAY.NEGOCIO_MPLAY_CONTENT_PERFORMANCE_BEST_TITLES` AS (
 

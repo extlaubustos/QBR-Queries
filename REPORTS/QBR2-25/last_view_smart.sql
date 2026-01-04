@@ -1,3 +1,19 @@
+-- description: Análisis de migración de plataforma: Identifica el primer consumo en Smart TV y rastrea la plataforma previa utilizada por el usuario para entender el flujo de adopción de dispositivos de pantalla grande. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: device adoption / platform migration analysis 
+-- grain: month_id, platform_prev, flag_log 
+-- time_grain: monthly 
+-- date_column: FIRST_SMART_MONTH 
+-- date_filter: dinámico (5 meses hacia atrás desde 2025-07-01) 
+-- threshold_rule: playback_time >= 20s y filtrado por DEVICE_PLATFORM LIKE '%TV%' para el evento de activación. 
+-- metrics: 
+-- - TOTAL_USERS: Cantidad de usuarios únicos que tuvieron su primera reproducción en Smart TV en el mes analizado. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - Self-join (CTE LAST_VIEW_MONTH_BEFORE_SMART): Cruza el primer evento en Smart TV con la reproducción inmediatamente anterior en el tiempo para determinar el origen del usuario. 
+-- owner: data_team
 DECLARE mes_inicial DATE DEFAULT DATE '2025-07-01';
 DECLARE meses_hacia_atras INT64 DEFAULT 5;
 

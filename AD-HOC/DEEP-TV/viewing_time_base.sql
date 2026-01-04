@@ -1,3 +1,29 @@
+-- description: Métricas de visitantes de MPlay en TV por sitio, plataforma, ciclo de vida y tiempo de visualización, agregadas por día, semana y mes
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, device_platform, life_cycle, viewing_time, day
+-- time_grain: daily / weekly / monthly
+-- date_column: s.DS
+-- date_filter: between (date_from, date_to)
+-- threshold_rule:
+-- - vista válida: TSV >= 20s
+-- metrics:
+-- - VIEWERS: cantidad de usuarios distintos con reproducción válida (>=20s)
+-- - TVM: minutos totales reproducidos
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.DM_MKT_MPLAY_RAW_PLAYS
+-- joins:
+-- - SESSION.SIT_SITE_ID = PLAYS.SIT_SITE_ID
+-- - SESSION.USER_ID = PLAYS.USER_ID
+-- - SESSION.MELIDATA_SESSION_ID = PLAYS.SESSION_ID
+-- - SESSION.SIT_SITE_ID = RAW_PLAYS.SIT_SITE_ID
+-- - SESSION.USER_ID = RAW_PLAYS.USER_ID
+-- - MONTH(SESSION.DS) = MONTH(RAW_PLAYS.TIM_DAY)
+-- owner: data_team
+
 -- VISITORS
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;

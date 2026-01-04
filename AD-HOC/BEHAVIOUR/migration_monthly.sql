@@ -1,3 +1,32 @@
+-- description: Análisis de migración mensual de usuarios entre plataformas de consumo, segmentado por recurrencia, nivel de engagement y volumen de consumo
+-- domain: behaviour
+-- product: mplay
+-- use_case: migration_analysis
+-- grain: month_id, site, platform_origin, migration_flow_destination, cust_type, engagement_origin, engagement_destination, tvm_timeframe, flag_log
+-- time_grain: monthly
+-- date_column: DS
+-- date_filter: up_to (hasta current_date - 1, con análisis desde 2025-01-01)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - TOTAL_USERS: usuarios únicos que migran, retienen plataforma o churnean entre meses consecutivos
+-- dimensions:
+-- - PLATFORM_ORIGIN: plataforma principal del usuario en el mes origen
+-- - MIGRATION_FLOW_DESTINATION: destino de plataforma en M+1 (misma plataforma, otra plataforma o churn)
+-- - CUST_TYPE: clasificación de recurrencia (NEW, RETAINED, RECOVERED)
+-- - CALIDAD_ABSOLUTA_MES_ORIGEN: nivel de engagement del usuario en el mes origen
+-- - CALIDAD_ABSOLUTA_MES_MIGRACION: nivel de engagement del usuario en el mes destino
+-- - TVM_TIMEFRAME: bucket de minutos consumidos en el mes origen
+-- - FLAG_LOG: indicador de usuario logueado
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- joins:
+-- - PLAYS.USER_ID = LIFECYCLE.USER_ID
+-- - PLAYS.SIT_SITE_ID = LIFECYCLE.SIT_SITE_ID
+-- - USER_MONTH_MONTH_JOIN (self join para M vs M+1)
+-- owner: data_team
+
 WITH NEW_RET_RECO AS
 (
     SELECT

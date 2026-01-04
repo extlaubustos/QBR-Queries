@@ -1,3 +1,23 @@
+-- description: Análisis de navegación Cross-Device (Mobile-to-TV) enfocado en sesiones: Identifica visitantes recurrentes o nuevos en Smart TV que fueron precedidos por una sesión en Mobile el mismo día, midiendo la tasa de influencia de la App Mobile en el tráfico de TV. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: cross-platform session journey / mobile-to-tv traffic influence 
+-- grain: month_id 
+-- time_grain: monthly 
+-- date_column: DS 
+-- date_filter: dinámico (date_from '2025-04-01' hasta date_to 'current_date - 1') 
+-- threshold_rule: 
+-- - Valid TV Session: Sesión no rebotada (is_bounced is FALSE) en plataforma TV. 
+-- - Mobile Influence: Sesión previa en Mobile (end_time < start_time de TV) el mismo día (same DS). 
+-- metrics: 
+-- - TOTAL_TV_VISITORS_PRECEDED_BY_MOBILE: Usuarios únicos que visitaron TV tras usar Mobile el mismo día. 
+-- - GRAND_TOTAL_TV_VISITORS: Total de visitantes únicos en dispositivos TV. 
+-- - MOBILE_TO_TV_SESSION_VISITORS: Share de visitantes de TV influenciados por una sesión previa en Mobile. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION 
+-- joins: 
+-- - ALL_TV_SESSIONS (TV) INNER JOIN BT_MKT_MPLAY_SESSION (S_MOBILE): Cruce por USER_ID y DS para detectar la secuencia de sesiones en diferentes dispositivos dentro de la misma fecha. 
+-- owner: data_team
 DECLARE date_from DATE;
 DECLARE date_to DATE;
 SET date_from = '2025-04-01';

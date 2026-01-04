@@ -1,3 +1,30 @@
+-- description: Métricas de visitors, valid visitors, viewers y consumo en Smart TV por sitio, fecha, día de la semana y plataforma, incluyendo descargas de la app
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, date, device_platform
+-- time_grain: daily
+-- date_column: s.DS
+-- date_filter: between
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - VISITORS: usuarios únicos con sesión en Smart TV
+-- - VALID_VISITORS: usuarios con sesiones consideradas válidas según reglas de interacción
+-- - VIEWERS_SMART: usuarios únicos con reproducción en Smart TV (threshold 20s)
+-- - TVM_SMART: minutos reproducidos en Smart TV (threshold 20s)
+-- - DOWNLOADS: instalaciones netas de la app
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_INSTALLS
+-- joins:
+-- - SESSION.SIT_SITE_ID = PLAYS.SIT_SITE_ID
+-- - SESSION.USER_ID = PLAYS.USER_ID
+-- - SESSION.SESSION_ID = PLAYS.SESSION_ID
+-- - SESSION.SIT_SITE_ID = INSTALLS.SIT_SITE_ID
+-- - SESSION.DS = INSTALLS.DS
+-- owner: data_team
+
 -- VISITORS
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;

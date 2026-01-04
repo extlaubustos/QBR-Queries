@@ -1,4 +1,28 @@
--- LCM_AHA_CRITERIO_AMPLIADO
+-- description: Base AHA Moment ajustada integrando sesiones y reproducciones de TV para cada cliente, determinando el primer contacto con TV y ajustando las fechas AHA según reglas de prioridad entre play y TV.
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting / customer_journey_analysis
+-- grain: SIT_SITE_ID, CUS_CUST_ID
+-- time_grain: daily
+-- date_column: DS / DIA_AHA_INI, DIA_AHA_MEIO, DIA_AHA_FIM
+-- date_filter: between
+-- threshold_rule: PLAYBACK_TIME_MILLISECONDS >= 20000
+-- metrics:
+-- - SESSIONS: cantidad de sesiones por cliente
+-- - IMPRESSIONS: impresiones de feed totales por cliente
+-- - PLAYS: cantidad de reproducciones por cliente
+-- - PLAY_TIME: tiempo reproducido (s) por cliente
+-- - DEVICE_TV: cantidad de plays en SMART-TV
+-- - DEVICE_DESK_APP: cantidad de plays en DESKTOP/MOBILE
+-- - PRIMEIRO_PLAY_TV: primer contacto con TV
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - SBOX_MELIIAM.BASE_AHA_MOMENT_PLAY
+-- joins:
+-- - SESSIONS y PLAYS se unen por SIT_SITE_ID, CUS_CUST_ID, DS
+-- - BASE_AHA_MOMENT_PLAY LEFT JOIN / JOIN con BASE_AHA_MOMENT_TV por SIT_SITE_ID, CUS_CUST_ID
+-- owner: data_team
 
 CREATE OR REPLACE TABLE `EXPLOTACION.BASE_AHA_MOMENT_TV` AS
 WITH

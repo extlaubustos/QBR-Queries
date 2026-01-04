@@ -1,3 +1,25 @@
+-- description: Análisis de penetración de Mercado Play sobre el ecosistema: Compara la audiencia de visualización (Viewers) frente a los usuarios con sesiones en el Marketplace y compradores únicos (Unique Buyers) por sitio y mes. 
+-- domain: commercial / ecosystem 
+-- product: mplay 
+-- use_case: market share / ecosystem penetration analysis 
+-- grain: sit_site_id, month_id 
+-- time_grain: monthly 
+-- date_column: ORD_CREATED_DT / DS / MONTH_ID 
+-- date_filter: >= '2023-01-01' 
+-- threshold_rule: playback_time >= 20s 
+-- metrics: 
+-- - UNIQUE_USERS_MKTPLCE: Usuarios únicos con sesión en el marketplace (TM) 
+-- - UNIQUE_VIEWERS: Usuarios logueados únicos con reproducción en MPlay 
+-- - UNIQUE_VIEWERS_NL: Usuarios totales (logueados y no logueados) con reproducción 
+-- - UNIQUE_BUYERS: Compradores únicos con órdenes cerradas en el marketplace 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_ORD_ORDERS 
+-- - meli-bi-data.SBOX_LOYALTY.MPLAY_NEGOCIO_MARKETPLACE_SESSIONS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - MPLAY_SESSIONS (M) LEFT JOIN PLAYS (P): Para cruzar tráfico de marketplace con visualización efectiva. 
+-- - MPLAY_SESSIONS (M) LEFT JOIN BUYERS_MARKETPLACE (B): Para comparar tráfico con conversión transaccional en el ecosistema. 
+-- owner: data_team
 WITH BUYERS_MARKETPLACE AS (
   select distinct date_trunc(bd.ord_created_dt,month) as MONTH_ID,
     bd.sit_site_id,

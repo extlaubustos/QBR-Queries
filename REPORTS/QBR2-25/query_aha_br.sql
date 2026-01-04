@@ -1,3 +1,28 @@
+-- description: Análisis de "Aha Moment" y su correlación con el Valor Comercial (TGMV) y Engagement (Play Time). Define el Aha Moment como alcanzar 3 días de reproducción en una ventana móvil de 30 días, analizando el impacto por cohorte, dispositivo y madurez del usuario. 
+-- domain: behaviour / growth 
+-- product: mplay 
+-- use_case: aha moment analysis / LTV correlation / qbr reporting 
+-- grain: sit_site_id, viewers (cus_cust_id), mes_calend, mes_cohort, device 
+-- time_grain: monthly 
+-- date_column: MES (mes_calend) 
+-- date_filter: >= '2023-01-01' (para compras) y acumulado histórico para visualizaciones 
+-- threshold_rule: 
+-- - Valid Play: playback_time >= 20s 
+-- - Aha Moment: 3 días con reproducción en un intervalo de 30 días (RECENCIA_PLAYS_2 < 30) 
+-- metrics: 
+-- - TGMV: Gasto total del usuario en Mercado Libre (Marketplace TM) 
+-- - PLAY_TIME: Tiempo total de reproducción en minutos 
+-- - MES_INDEX_AHA: Mes relativo en el que el usuario alcanzó el Aha Moment 
+-- - DEVICE: Clasificación del dispositivo de consumo (TV, DESKTOP_APP, MULTI) 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_ORD_ORDERS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - SESSIONS UNION PLAYS: Para determinar el primer contacto real con el producto. 
+-- - TABELA LEFT JOIN TABELA2: Cruce de actividad mensual con el flag de haber alcanzado el Aha Moment. 
+-- - TABELA LEFT JOIN SALES: Atribución de valor transaccional a los días de actividad en MPlay. 
+-- owner: data_team
 CREATE OR REPLACE TABLE `meli-bi-data.SBOX_MELIIAM.LYL_ANALISE_AHA_PLAY_QBR2` AS
 
 WITH

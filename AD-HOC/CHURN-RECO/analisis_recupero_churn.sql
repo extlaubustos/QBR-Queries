@@ -1,3 +1,36 @@
+-- description: Análisis de engagement, segmentación y recuperación de usuarios MPlay, incluyendo scoring de engagement, definición de umbrales, clasificación de calidad y caracterización de usuarios recuperados con contexto de contenido y canal
+-- domain: behaviour
+-- product: mplay
+-- use_case: user_lifecycle_analysis
+-- grain: user
+-- time_grain: monthly
+-- date_column: SN.SNAPSHOT_DATE
+-- date_filter: <= current_date
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - SCORE_ENG: score de engagement ponderado por nivel de actividad (high, medium, low)
+-- - TOTAL_HIGH: meses con actividad high
+-- - TOTAL_MED: meses con actividad medium
+-- - TOTAL_LOW: meses con actividad low
+-- - TOTAL_USERS: cantidad de usuarios únicos
+-- - AGING_RECOVER: meses desde última actividad antes de la recuperación
+-- - CALIDAD_ABSOLUTA: clasificación de engagement (A/B/C)
+-- tables_read:
+-- - MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- - MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - SNAPSHOT.SIT_SITE_ID = USER.SIT_SITE_ID
+-- - SNAPSHOT.USER_ID = USER.USER_ID
+-- - PLAYS.USER_ID = SNAPSHOT.USER_ID
+-- - PLAYS.SIT_SITE_ID = SNAPSHOT.SIT_SITE_ID
+-- - SESSION.USER_ID = PLAYS.USER_ID
+-- - SESSION.SESSION_ID = PLAYS.SESSION_ID
+-- owner: data_team
+
 -- HOJA DE DETALLES
 WITH USER_MONTHS AS (
   SELECT

@@ -1,6 +1,26 @@
--- En esta query solo vamos a traer las siguientes columnas: MONTH, SITE, TOTAL_USERS_RECO, TVM_PREV, TVM_ACT, ATV_PREV, ATV_ACT, CVR_PREV, CVR_ACT
--- Esto es para la hoja 1 y vamos a armar lo siguiente:
--- Filtros: Por SITE,
+-- description: Análisis de usuarios recuperados midiendo consumo (TVM/ATV) y plataforma de uso por mes
+-- domain: consumption
+-- product: mplay
+-- use_case: recovered_users_platform_consumption
+-- grain: site_id, month, platform
+-- time_grain: monthly
+-- recovery_definition:
+-- - recovered if days_between_consecutive_plays > 30
+-- engagement_metrics:
+-- - TVM: total view minutes
+-- - ATV: average TVM per user
+-- platform_logic:
+-- - SMART: consumo en TV
+-- - MOBILE: consumo en mobile
+-- - DESKTOP: consumo en desktop
+-- - CAST: consumo cast
+-- filters:
+-- - playback_time >= 20 seconds
+-- - date_range: from 2025-01-01 to current_date
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- owner: data_team
+
 WITH BASE_USERS AS (
   SELECT
     SIT_SITE_ID,

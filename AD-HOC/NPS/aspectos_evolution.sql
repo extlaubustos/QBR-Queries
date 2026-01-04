@@ -1,3 +1,25 @@
+-- description: Métricas NPS de MPlay por sitio y trimestre, calculando proporción de promotores y detractores para variedad, publicidad, usabilidad, desempeño y recomendaciones
+-- domain: customer_experience
+-- product: mplay
+-- use_case: reporting
+-- grain: site, quarter, user
+-- time_grain: quarterly
+-- date_column: NPS_REL_RES_END_DATE
+-- date_filter: awareness = 'Si' AND SIT_SITE_ID IN ('MLB','MLM','MLA','MLC','MCO')
+-- threshold_rule: N/A
+-- metrics:
+-- - VARIEDAD_DETRACTORES / PROMOTORES: proporción de usuarios con CSAT_VARIETY 0 o 1
+-- - PUBLICIDAD_DETRACTORES / PROMOTORES: proporción de usuarios con CSAT_ADVERTISING 0 o 1
+-- - USO_DETRACTORES / PROMOTORES: proporción de usuarios con CSAT_USABILITY 0 o 1
+-- - FUNCIONAMIENTO_DETRACTORES / PROMOTORES: proporción de usuarios con CSAT_PERFORMANCE 0 o 1
+-- - NOTIFICACIONES_DETRACTORES / PROMOTORES: proporción de usuarios con CSAT_RECOMMENDATIONS 0 o 1
+-- tables_read:
+-- - WHOWNER.BT_CX_NPS_REL_MPLAY
+-- joins:
+-- - BASE.SIT_SITE_ID = TOTAL.SIT_SITE_ID
+-- - BASE.QUARTER = TOTAL.QUARTER
+-- owner: data_team
+
 WITH BASE AS (
   
   SELECT 

@@ -1,3 +1,41 @@
+-- description: Inserción diaria de usuarios MPlay por touchpoint, usando solo el día anterior como timeframe.
+-- domain: media_analytics
+-- product: mplay
+-- use_case: daily_user_touchpoint_load
+-- grain: site, day, user_classification, origin, platform
+-- time_grain: daily
+-- date_column: DS
+-- date_filter: DS = CURRENT_DATE() - 1 AND PLAYBACK_TIME_MILLISECONDS/1000 >= 20
+-- metrics:
+-- - Sessions: total de sesiones
+-- - Sessions_valid_visit: sesiones válidas
+-- - Sessions_valid_view: sesiones con reproducción válida
+-- - TVM: tiempo total de reproducción en minutos
+-- - Visitors: total de usuarios distintos
+-- - Valid_Visitors: usuarios con visitas válidas
+-- - Viewers: usuarios con reproducción válida
+-- dimensions:
+-- - timeframe_type: DAILY
+-- - timeframe_id: fecha del día
+-- - sit_site_id: identificador de sitio
+-- - MONTH_ID: mes
+-- - WEEK_ID: semana
+-- - Origin: origen del primer evento
+-- - User_Classification: NEW, RETAINED, RECOVERED
+-- - touchpoint_team: combinación Clasificacion-Subclasificacion-Team
+-- - touchpoint_no_team: combinación Clasificacion-Subclasificacion
+-- - Clasificacion, Clasificacion_2: categoría de touchpoint
+-- - team: equipo asignado
+-- - platform: SMART, MOBILE, DESKTOP, OTHER
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - MPLAY.CLASIFICATION_ORIGINS
+-- - MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - LEFT JOIN de orígenes y equipos de clasificación por origin
+-- owner: data_team
+
 INSERT INTO meli-sbox.MPLAY.MPLAY_TOUCHPOINT_USER
 (
     timeframe_type, timeframe_id, sit_site_id, MONTH_ID, WEEK_ID, Origin, 

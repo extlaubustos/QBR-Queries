@@ -1,3 +1,19 @@
+-- description: Análisis de retención de largo plazo para usuarios recuperados (RECOVERED). Rastrea el comportamiento posterior de los usuarios que regresaron al producto después de una inactividad >30 días, midiendo cuántos de ellos se mantienen activos en los meses siguientes. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: recovered user retention / long-term loyalty analysis 
+-- grain: sit_site_id, recovery_month, play_month 
+-- time_grain: monthly 
+-- date_column: DS 
+-- date_filter: <= CURRENT_DATE - 1 
+-- threshold_rule: playback_time >= 20s 
+-- metrics: 
+-- - recovered_users_who_returned: cantidad de usuarios únicos recuperados que presentan actividad en meses posteriores al de su recuperación. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - recovered_users (ru) JOIN all_future_plays (afp): Cruce de la cohorte de recuperación con toda su actividad futura para medir persistencia. 
+-- owner: data_team
 WITH user_classifications AS (
     SELECT
         SIT_SITE_ID,

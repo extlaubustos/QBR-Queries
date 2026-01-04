@@ -1,3 +1,39 @@
+-- description: Análisis del primer touchpoint de sesión MPlay por usuario, combinando origen de entrada, plataforma y distribución de plays por tipo de contenido
+-- domain: behaviour
+-- product: mplay
+-- use_case: session_origin_analysis
+-- grain: user
+-- time_grain: session_first_touch
+-- date_column: s.ds
+-- date_filter: ds >= '2024-12-30' AND ds < current_date
+-- sites: MLC, MLA, MLB, MLM, MCO, MPE, MLU, MEC
+-- session_rules:
+-- - first_session_per_user (ordenado por fecha y primer play)
+-- - valid_play_threshold >= 20 seconds
+-- metrics:
+-- - UNIQUE_SESSIONS
+-- - PLAYS_EPISODE
+-- - PLAYS_MOVIE
+-- - PLAYS_SEASON
+-- - PLAYS_SHOW
+-- - PLAYS_LIVEEVENT
+-- - PLAYS_LIVECHANNEL
+-- dimensions:
+-- - Origin (clasificado por path / plataforma)
+-- - DEVICE_PLATFORM
+-- - MONTH_ID
+-- - WEEK_ID
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- - MPLAY.CLASIFICATION_ORIGINS
+-- joins:
+-- - sessions ↔ total_sessions by SIT_SITE_ID, USER_ID
+-- - sessions ↔ classification_origins by origin
+-- - users ↔ plays by USER_ID
+-- owner:
+
 WITH SESSIONS AS (
   SELECT
     t.*

@@ -1,3 +1,21 @@
+-- description: Resumen mensual de usuarios de Desktop por flujo de migración y tipo de cliente
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: sit_site_id, month_id, desktop_migration_flow
+-- time_grain: monthly
+-- date_column: MONTH_ID
+-- date_filter: hasta CURRENT_DATE - 1
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - TOTAL_USERS: cantidad de usuarios únicos por flujo de Desktop
+-- tables_read:
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+-- - NEW_RET_RECO join ATTR_TIME_FRAME_ELEGIDO por sit_site_id, user_id, time_frame_id
+-- - PLATFORM_MIGRATION_DESKTOP self-join BASE_PLATFORM para mes anterior
+-- owner: data_team
+
 WITH NEW_RET_RECO AS
 (
     SELECT

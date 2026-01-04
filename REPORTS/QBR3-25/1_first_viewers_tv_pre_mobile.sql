@@ -1,3 +1,25 @@
+-- description: Análisis de influencia Cross-Device: Identifica usuarios que migraron de Mobile a Smart TV, cuantificando cuántos usuarios nuevos en TV tuvieron una sesión activa en Mobile en las 24 horas previas a su primer play en pantalla grande. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: cross-platform journey / mobile-to-tv conversion analysis 
+-- grain: month_id 
+-- time_grain: monthly 
+-- date_column: FIRST_TV_PLAY_DS 
+-- date_filter: date_from (2025-04-01) to current_date - 1 
+-- threshold_rule: 
+-- - Valid TV Play: playback_time >= 20s y LOGGED_USER is TRUE 
+-- - Mobile Influence: Sesión no rebotada (is_bounced is FALSE) en Mobile antes del timestamp del primer play en TV. 
+-- metrics: 
+-- - USERS_MOBILE_BEFORE_FIRST_TV_PLAY: Usuarios influenciados por Mobile antes de su debut en TV. 
+-- - GRAND_TOTAL_FIRST_TV_VIEWERS: Total de usuarios que iniciaron en Smart TV por primera vez. 
+-- - MOBILE_TO_FIRST_TV_VIEWER_SHARE: Tasa de conversión o share de influencia de Mobile sobre TV. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION 
+-- joins: 
+-- - FIRST_TV_PLAY (F) INNER JOIN BT_MKT_MPLAY_SESSION (S_MOBILE): Para validar la existencia de una sesión previa en mobile dentro de la ventana temporal definida. 
+-- - INFLUENCED_USERS INNER JOIN TOTAL_FIRST_TV_VIEWERS: Para el cálculo de proporciones (shares) por sitio y mes. 
+-- owner: data_team
 DECLARE date_from DATE;
 DECLARE date_to DATE;
 SET date_from = '2025-04-01';

@@ -1,3 +1,29 @@
+-- description: Métricas de sesiones, reproducción y usuarios por origen y clasificación de marketing TV
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: sit_site_id, origin, Clasificacion
+-- time_grain: daily
+-- date_column: DS
+-- date_filter: entre date_from y date_to
+-- threshold_rule: playback_time >= 20s, visitas válidas definidas por interacciones
+-- metrics:
+-- - Sessions: sesiones totales
+-- - Sessions_valid_visit: sesiones con visita válida (sin bounced)
+-- - Sessions_valid_view: sesiones con reproducción >= 20s
+-- - TVM: minutos reproducidos
+-- - Visitors: usuarios únicos
+-- - Valid_Visitors: usuarios con visita válida
+-- - Viewers: usuarios con reproducción >= 20s
+-- tables_read:
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - meli-sbox.MPLAY.CLASIFICATION_ORIGINS
+-- joins:
+-- - SESSION_PLAY joins BT_MKT_MPLAY_PLAYS por sit_site_id, user_id y session_id
+-- - LEFT JOIN CLASIFICATION_ORIGINS por FIRST_EVENT_SOURCE
+-- owner: data_team
+
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;
 DECLARE date_to DATE;

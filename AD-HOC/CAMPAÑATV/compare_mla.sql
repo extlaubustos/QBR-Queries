@@ -1,3 +1,52 @@
+-- description: Análisis de impacto de campañas CTV sobre VISITORS, VIEWERS y DOWNLOADS en Smart TV
+-- domain: growth_marketing
+-- product: mplay
+-- use_case: ctv_campaign_performance
+-- grain: period_name
+-- time_grain: custom_periods
+-- date_column: DS
+-- sites: MLA (parametrizable)
+-- device_scope: Smart TV (DEVICE_PLATFORM LIKE '/tv%')
+
+-- periods_defined:
+-- - CONTROL PRE CTV: 2025-07-14 → 2025-08-15
+-- - CTV1: 2025-08-18 → 2025-09-19
+-- - CTV1 COMPARE CTV2: 2025-08-18 → 2025-08-27
+-- - CTV1 COMPARE CTVOFF: 2025-08-23 → 2025-09-13
+-- - CTVOFF COMPARE CTV1: 2025-09-20 → 2025-10-11
+-- - CTV OFF: 2025-09-20 → 2025-10-19
+-- - CTV OFF COMPARE CTV2: 2025-09-22 → 2025-10-01
+-- - CTV2: 2025-10-20 → CURRENT_DATE
+
+-- metrics:
+-- - UNIQUE_VIEWERS: usuarios únicos con al menos un playback >= 20s
+-- - UNIQUE_VISITORS: usuarios únicos con sesión válida en Smart TV
+-- - TOTAL_DOWNLOADS: descargas netas de la app
+
+-- business_rules:
+-- - Viewer: PLAYBACK_TIME >= 20 segundos
+-- - Visitor: sesión Smart TV con interacción válida (search, vcp, vcm, play o feed impressions)
+-- - Downloads: NET_APP_INSTALLS agregados por día
+
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_INSTALLS
+
+-- joins:
+-- - SESSION ↔ PLAYS por USER_ID + SESSION_ID + SITE
+-- - Agregaciones independientes por período (no join entre métricas)
+
+-- output:
+-- - period_start
+-- - period_end
+-- - period_name
+-- - unique_viewers
+-- - unique_visitors
+-- - total_downloads
+
+-- owner: growth_analytics
+
 -- VISITORS
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;

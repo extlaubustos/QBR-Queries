@@ -1,3 +1,29 @@
+-- description: Análisis de usuarios impactados por campañas de push segmentados por estado New / Retained / Recovered según consumo de mplay
+-- domain: marketing
+-- product: mplay
+-- use_case: campaign_analysis
+-- grain: campaign_name, push_type, strategy, n_r_flag
+-- time_grain: monthly
+-- date_column: DS
+-- date_filter: up_to (hasta current_date - 1)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - CANTIDAD_USUARIOS_EN_CAMPANA: usuarios únicos impactados por campaña, segmentados por estado New / Retained / Recovered
+-- dimensions:
+-- - FLAG_N_R: clasificación del usuario según recurrencia de consumo (NEW, RETAINED, RECOVERED)
+-- - CAMPAIGN_NAME: nombre de la campaña de push
+-- - PUSH_TYPE: tipo de push enviado
+-- - STRATEGY: estrategia de la campaña
+-- tables_read:
+-- - SBOX_MARKETING.BT_OC_PUSH_CUST_EVENT
+-- - SBOX_MARKETING.LK_OC_METADATA
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+-- - PUSH_EVENT.HASH_ID = METADATA.HASH_ID
+-- - PUSH_EVENT.SIT_SITE_ID = METADATA.SIT_SITE_ID
+-- - PUSH_EVENT.CUS_CUST_ID = PLAYS.CUS_CUST_ID
+-- owner: data_team
+
 WITH PUSH_METADATA AS (
   SELECT
       A.CUS_CUST_ID,

@@ -1,3 +1,19 @@
+-- description: Monitoreo de adopción de Smart TV. Identifica y cuantifica a los usuarios que realizan su primera reproducción histórica en dispositivos de TV para entender el crecimiento de la base instalada en pantallas grandes. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: device adoption / growth analysis 
+-- grain: mes 
+-- time_grain: monthly 
+-- date_column: first_tv_ds (métrica basada en el MIN de DS) 
+-- date_filter: first_tv_ds between '2025-04-01' and '2025-09-30' 
+-- threshold_rule: playback_time > 20s y DEVICE_PLATFORM LIKE '/tv%' 
+-- metrics: 
+-- - viewers_primera_vez_tv: Cantidad de usuarios únicos cuya primera visualización en TV ocurrió en el mes analizado. 
+-- tables_read: 
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - N/A (Self-aggregation) 
+-- owner: data_team
 WITH tv_viewer_plays AS (
   SELECT
     USER_ID,

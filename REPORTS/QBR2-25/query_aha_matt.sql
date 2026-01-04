@@ -1,3 +1,29 @@
+
+-- description: Atribución de canales de marketing (MATT) para la adquisición de nuevos usuarios y su impacto en la retención (Day 1-30) y Aha Moment. Utiliza un modelo de atribución proporcional para distribuir el peso de los canales en el comportamiento posterior del usuario. 
+-- domain: growth / attribution 
+-- product: mplay 
+-- use_case: marketing channel performance / user quality analysis 
+-- grain: month_id, flag_user, sit_site_id, channel 
+-- time_grain: monthly 
+-- date_column: CONVERSION_CREATED_DATE 
+-- date_filter: dinámico (con cambio de lógica de hash_id en 2024-11-01) 
+-- threshold_rule: 
+-- - Valid Play: playback_time >= 20s 
+-- - Retention: Al menos una reproducción entre el día +1 y +30 después del primer play. 
+-- - Aha Moment: Al menos 2 días distintos de reproducción en la ventana de 30 días. 
+-- metrics: 
+-- - TOTAL_USERS: Suma atribuida de usuarios (proporcional por canal). 
+-- - TOTAL_USERS_RETENTION: Usuarios atribuidos que regresaron en su primer mes. 
+-- - TOTAL_USERS_AHA_MOMENT: Usuarios atribuidos que alcanzaron el umbral de frecuencia (2 días+). 
+-- tables_read: 
+-- - growth-attribution.production.BT_MATT_FINE_TUNED_MERCADOPLAY 
+-- - meli-bi-data.WHOWNER.LK_MPLAY_FIRST_PLAY 
+-- - meli-bi-data.WHOWNER.LK_MPLAY_FIRST_SESSION 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - BT_MATT LEFT JOIN LK_MPLAY (Play/Session): Para identificar al USER_ID según la fecha de conversión. 
+-- - TOTAL_X_USER LEFT JOIN F (Subconsulta de métricas): Cruce de atribución con comportamiento real de retención. 
+-- owner: data_team
 with matt_total_channel_month as (
 SELECT
 M.SIT_SITE_ID,

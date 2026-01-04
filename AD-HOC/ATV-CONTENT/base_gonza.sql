@@ -1,3 +1,24 @@
+-- description: Métricas de consumo de contenido (TVM, viewers y días con consumo) por título, tipo y proveedor ajustado
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: title, content_type_ajustado, content_provider, content_provider_ajustado
+-- time_grain: aggregated_period
+-- date_column: P.DS
+-- date_filter: between
+-- threshold_rule: playback_time_milliseconds >= 20000
+-- metrics:
+--   - TVM: minutos totales reproducidos considerando solo reproducciones con playback >= 20s
+--   - VIEWERS: usuarios únicos con al menos una reproducción >= 20s
+--   - DAYS: cantidad de días distintos con consumo registrado
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+--   - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- joins:
+--   - P.SIT_SITE_ID = C.SIT_SITE_ID
+--   - P.CONTENT_ID = C.CONTENT_ID
+-- owner: data_team
+
 SELECT
 C.TITLE_ADJUSTED,
 --C.CONTENT_TYPE,

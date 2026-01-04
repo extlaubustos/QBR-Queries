@@ -1,6 +1,27 @@
--- ============================================================================
--- SIN CANAL ===============
--- ============================================================================
+-- description: Cohortes de usuarios "NEW" (primer día de reproducción) con métricas de reproducción (TVM) por plataforma y mes de cohorte, incluyendo retención mensual.
+-- domain: behaviour
+-- product: mplay
+-- use_case: cohort_analysis / retention_reporting
+-- grain: SIT_SITE_ID, USER_ID, MONTH_COHORT_ACQ, PLATFORM
+-- time_grain: daily / monthly cohort
+-- date_column: DS / FIRST_DAY
+-- date_filter: between
+-- threshold_rule: PLAYBACK_TIME_MILLISECONDS >= 20000
+-- metrics:
+-- - TVM: minutos reproducidos por usuario en el periodo
+-- - TOTAL_USERS_COHORT: cantidad de usuarios en la cohorte
+-- - TOTAL_USERS_RETENTION: cantidad de usuarios con consumo en el mes
+-- - ALL_MONTH_USER_RET: usuarios activos en todo el mes
+-- - ALL_MONTH_TVM: minutos reproducidos por usuarios activos todo el mes
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.LK_TIM_DAYS
+-- joins:
+-- - PLAY_FIRST_DAY LEFT JOIN TABLE_CALENDAR ON FIRST_DAY = FECHA_COHORT
+-- - PLAY_FIRST_DAY LEFT JOIN PLATFORM_DATA ON SIT_SITE_ID, USER_ID, MONTH
+-- - BASE LEFT JOIN PLAY_DAYS ON USER_ID, SIT_SITE_ID, DAY_PLAY BETWEEN FECHA_INI AND FECHA_FIN
+-- owner: data_team
+
 WITH
 -- ========================
 -- 1) Plays base

@@ -1,3 +1,32 @@
+-- description: Función para obtener resumen de reproducciones MPlay por sitio y mes, categorizando por tiempo total de reproducción, tipo de usuario y plataformas utilizadas
+-- domain: media_analytics
+-- product: mplay
+-- use_case: user_engagement_summary
+-- grain: site, month
+-- time_grain: monthly
+-- date_column: DS
+-- date_filter: PLAYBACK_TIME_MILLISECONDS/1000 >= 20 AND DS <= CURRENT_DATE-1
+-- metrics:
+-- - TVM_TOTAL: Minutos totales de reproducción por usuario en el mes
+-- - TOTAL_TV: Minutos de reproducción en dispositivos TV
+-- - TOTAL_MOBILE: Minutos de reproducción en dispositivos móviles
+-- - TOTAL_DESKTOP: Minutos de reproducción en escritorio
+-- - TOTAL_CAST: Minutos de reproducción cast
+-- - TOTAL_USERS: Conteo de usuarios distintos por mes
+-- dimensions:
+-- - SIT_SITE_ID
+-- - MONTH_ID
+-- - TVM_TIMEFRAME: Categoría de tiempo de reproducción
+-- - CUST_TYPE: Tipo de usuario (NEW, RETAINED, RECOVERED)
+-- - FLAG_LOG: Usuario logueado o no
+-- - PLATFORM: Combinación de plataformas utilizadas
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - STG.TORRE_AUX_SITE
+-- joins:
+-- - LEFT JOIN CASTED_PLAYS y CRUCE_FLAG por SIT_SITE_ID, USER_ID y TIME_FRAME_ID
+-- owner: data_team
+
 CREATE OR REPLACE TABLE FUNCTION `STG.TORRE_LE_PLAY_PLAYS_NEW_L1` (v_sit_site_id STRING, v_dt_to DATE) AS 
   
 

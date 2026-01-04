@@ -1,3 +1,27 @@
+-- description: Gestión de suscripciones y consumo de contenido NBCU/Universal+ basado en comportamiento de compra (TGMV) y actividad de visualización en Mercado Play. 
+-- domain: commercial 
+-- product: mplay 
+-- use_case: subscription lifecycle / partner performance (NBCU) 
+-- grain: cus_cust_id, sit_site_id, status 
+-- time_grain: daily (snapshot update) 
+-- date_column: FECHA_ALTA_SERVICIO / FECHA_BAJA_SERVICIO 
+-- date_filter: last year for purchases, from 2024-07-18 for plays 
+-- threshold_rule: 
+-- - Quarterly Access: SUM(TGMV) >= 25 USD (last 3 months + grace period) 
+-- - Yearly Access: SUM(TGMV) >= 100 USD (last 1 year + grace period) 
+-- - Valid Play: playback_time >= 20s 
+-- metrics: 
+-- - TVM_LIVE: minutos reproducidos en canales en vivo de NBCU 
+-- - TVM_VOD: minutos reproducidos en contenido VOD de NBCU 
+-- - TGMV_USD: monto total de compras procesadas (Gross Merchandise Volume) 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_ORD_ORDERS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - meli-bi-data.WHOWNER.LK_MKT_MPLAY_CATALOGUE 
+-- joins: 
+-- - PLAYS LEFT JOIN CATALOGUE: Identificación de contenido por proveedor (NBCU/Universal+) 
+-- - DATE_SELECT LEFT JOIN PLAY_NBCU: Cruce de elegibilidad por compra con consumo real 
+-- owner: data_team
 CREATE OR REPLACE TEMP TABLE MPLAY_NEGOCIO_NBCU_DATA_UPDATE AS (
   WITH DATE_COMPRAS AS(
     SELECT

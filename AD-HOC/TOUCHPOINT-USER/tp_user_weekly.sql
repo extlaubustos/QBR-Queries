@@ -1,3 +1,31 @@
+-- description: Métricas de engagement de usuarios por origen, plataforma y clasificación para la semana anterior
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: sit_site_id, origin, platform, user_classification, team
+-- time_grain: weekly
+-- date_column: DS
+-- date_filter: previous week (Monday to Sunday)
+-- threshold_rule: playback_time >= 20s, valid visit definido por interacciones
+-- metrics:
+-- - Sessions: sesiones totales
+-- - Sessions_valid_visit: sesiones con visita válida
+-- - Sessions_valid_view: sesiones con reproducción >= 20s
+-- - TVM: minutos reproducidos
+-- - Visitors: usuarios únicos
+-- - Valid_Visitors: usuarios con visita válida
+-- - Viewers: usuarios con reproducción >= 20s
+-- tables_read:
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION
+-- - meli-sbox.MPLAY.CLASIFICATION_ORIGINS
+-- - meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - SESSION_PLAY joins BT_MKT_MPLAY_PLAYS por sit_site_id, user_id y session_id
+-- - SESSIONS joins ATTR_TIME_FRAME_ELEGIDO por sit_site_id, user_id y month
+-- - BASE_MPLAY_WEEKLY joins CLASSIFICATION_ORIGINS y LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION por origin
+-- owner: data_team
+
 INSERT INTO meli-sbox.MPLAY.MPLAY_TOUCHPOINT_USER
 (
     timeframe_type, timeframe_id, sit_site_id, MONTH_ID, WEEK_ID, Origin, 

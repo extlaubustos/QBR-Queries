@@ -1,3 +1,21 @@
+-- description: Segmentación de la audiencia según preferencia de contenido (Películas vs. Series). Clasifica a los usuarios en categorías excluyentes (Movies Only, Series Only, Both) para analizar patrones de consumo y volumen de TVMs por perfil. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: audience profiling / content preference analysis 
+-- grain: month_id, viewer_type 
+-- time_grain: monthly 
+-- date_column: DS 
+-- date_filter: >= '2025-01-01' 
+-- threshold_rule: playback_time >= 20s 
+-- metrics: 
+-- - VIEWERS: Cantidad de usuarios únicos clasificados en cada perfil de preferencia. 
+-- - TOTAL_TVMs: Minutos totales reproducidos por cada segmento de usuarios. 
+-- tables_read: 
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - WHOWNER.LK_MKT_MPLAY_CATALOGUE 
+-- joins: 
+-- - PLAYS (PL) LEFT JOIN CATALOGUE (C): Para mapear el CONTENT_TYPE de cada reproducción y derivar la categoría de contenido. 
+-- owner: data_team
 -- Paso 1: Obtener todas las reproducciones válidas y enriquecerlas con la categoría de contenido (Movie, Serie, Other).
 -- Una reproducción es válida si dura al menos 20 segundos (20,000 milisegundos).
 WITH PLAYS_WITH_CATEGORY AS (

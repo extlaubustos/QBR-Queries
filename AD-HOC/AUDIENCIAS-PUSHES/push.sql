@@ -1,3 +1,34 @@
+-- description: Análisis de impacto de campañas de push en consumo de mplay TV, segmentando usuarios según interacción con el push y estado de login
+-- domain: marketing
+-- product: mplay
+-- use_case: campaign_performance
+-- grain: site, has_logged, push_segment
+-- time_grain: aggregated_period
+-- date_column: DS
+-- date_filter: parameters (push_sent_date, deanonimized_snp_date)
+-- threshold_rule: playback_time >= 20s, device_platform IN (TV devices)
+-- metrics:
+-- - CUST_ID_DEANONYMIZED: cantidad de usuarios únicos deanonimizados
+-- - TVM: minutos totales reproducidos post push
+-- - ATV: minutos promedio reproducidos por usuario (TVM / usuarios)
+-- - AVG_PPU: promedio de contenidos distintos consumidos por usuario
+-- - AVG_FREQUENCY: promedio de días distintos con consumo por usuario
+-- dimensions:
+-- - PUSH_SEGMENT: nivel máximo de interacción con el push (opened, shown, arrived, sent, control)
+-- - HAS_LOGGED: indicador de si el usuario se logueó post deanonimización
+-- tables_read:
+-- - SBOX_MARKETING.BT_OC_PUSH_CUST_EVENT
+-- - SBOX_MARKETING.LK_OC_METADATA
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MPLAY_LOGIN_TRANSACTIONS
+-- - MPLAY.SNP_BASE_CUST_ID_DEANONYMIZED_TV
+-- joins:
+-- - PUSH_EVENT.HASH_ID = METADATA.HASH_ID
+-- - PUSH_EVENT.SIT_SITE_ID = METADATA.SIT_SITE_ID
+-- - DEANONYMIZED.CUST_ID_DEANONYMIZED = PUSH.CUS_CUST_ID
+-- - LOGIN.CUS_CUST_ID = PLAYS.USER_ID
+-- owner: data_team
+
 DECLARE site_param STRING DEFAULT 'MLM';
 DECLARE deanonimized_snp_date DATE DEFAULT '2025-08-04';
 DECLARE push_sent_date DATE DEFAULT '2025-08-06';

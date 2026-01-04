@@ -1,3 +1,19 @@
+-- description: Descargas de la app MPlay por sitio y plataforma, con agregaciones diarias, semanales y mensuales
+-- domain: acquisition
+-- product: mplay
+-- use_case: reporting
+-- grain: site, platform, day
+-- time_grain: day / week / month
+-- date_column: DS
+-- date_filter: none
+-- metrics:
+-- - DOWNLOADS: total de instalaciones netas de la app
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_INSTALLS
+-- joins:
+-- - N/A
+-- owner: data_team
+
 SELECT 
 SIT_SITE_ID,
 DATE_TRUNC(DS, MONTH) AS MONTH_ID,

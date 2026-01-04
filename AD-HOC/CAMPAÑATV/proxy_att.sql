@@ -1,3 +1,30 @@
+-- description: Cálculo de crecimiento de visitors en Smart TV (LG) y atribución de campañas (TV vs Banners/Pushes) mediante proxy de crecimiento mensual
+-- domain: behaviour
+-- product: mplay
+-- use_case: attribution_analysis
+-- grain: metric
+-- time_grain: aggregated_period
+-- date_column: s.DS
+-- date_filter: between
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - VISITORS: usuarios únicos por día con sesiones válidas
+-- - TSV: segundos totales reproducidos por sesión
+-- - TVM: minutos totales reproducidos (threshold 20s)
+-- - DOWNLOADS: instalaciones netas de la app
+-- - GROWTH_TOTAL: crecimiento porcentual durante semana de campaña
+-- - ATTRIBUTED_GROWTH_TV: crecimiento atribuido a campaña de TV
+-- - ATTRIBUTED_GROWTH_OTHER: crecimiento atribuido a banners y pushes
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_INSTALLS
+-- joins:
+-- - SESSION.SIT_SITE_ID = PLAYS.SIT_SITE_ID
+-- - SESSION.USER_ID = PLAYS.USER_ID
+-- - SESSION.SESSION_ID = PLAYS.SESSION_ID
+-- owner: data_team
+
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;
 DECLARE date_to DATE;

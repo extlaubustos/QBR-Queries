@@ -1,3 +1,21 @@
+-- description: Análisis de traslape de audiencias: Identifica la cantidad de usuarios que consumen contenido en Mercado Play (Viewers) y que simultáneamente realizan compras en el Marketplace (Buyers) dentro del mismo mes para medir el perfil transaccional de la audiencia. 
+-- domain: commercial / ecosystem 
+-- product: mplay 
+-- use_case: audience profiling / overlap analysis 
+-- grain: month_id, sit_site_id, flag_log 
+-- time_grain: monthly 
+-- date_column: DS / ORD_CREATED_DT 
+-- date_filter: >= '2023-01-01' 
+-- threshold_rule: playback_time >= 20s 
+-- metrics: 
+-- - TOTAL_VIEWERS: Usuarios únicos con reproducciones efectivas en el mes. 
+-- - TOTAL_BUYERS: Usuarios únicos que, siendo viewers, también realizaron una compra cerrada en el Marketplace (TM) en el mismo mes. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_ORD_ORDERS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - VIEWERS_PLATFORM_LABELLED (v) LEFT JOIN BUYERS_MARKETPLACE (b): Cruce por USER_ID, MONTH_ID y SIT_SITE_ID para identificar comportamiento mixto (ver y comprar). 
+-- owner: data_team
 WITH BUYERS_MARKETPLACE AS (
   SELECT DISTINCT 
     DATE_TRUNC(bd.ord_created_dt, MONTH) AS MONTH_ID,

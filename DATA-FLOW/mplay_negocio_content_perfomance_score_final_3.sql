@@ -1,11 +1,19 @@
--- Parte 1: DELETE (Eliminar datos antiguos)
-
--- Esta instrucción elimina todas las filas de la tabla `MPLAY_NEGOCIO_SEARCH_WORDS`
--- donde la columna `DS` (que probablemente representa la fecha de la búsqueda)
--- es igual o posterior a la fecha actual menos 7 días.
--- Esto asegura que la tabla solo contenga los datos más recientes que serán
--- insertados en el siguiente paso.
-
+-- description: Extracción y agregación de palabras clave buscadas por los usuarios en el buscador de Mercado Play 
+-- domain: discovery 
+-- product: mplay 
+-- use_case: search analysis 
+-- grain: sit_site_id, ds, word 
+-- time_grain: daily 
+-- date_column: DS 
+-- date_filter: last 7 days (current_date-7) 
+-- threshold_rule: N/A 
+-- metrics: 
+-- - TOTAL_TRACKS: cantidad de eventos de búsqueda por palabra, sitio y día 
+-- tables_read: 
+-- - meli-bi-data.MELIDATA.TRACKS 
+-- joins: 
+-- - N/A 
+-- owner: data_team
 DELETE FROM `meli-sbox.MPLAY.MPLAY_NEGOCIO_SEARCH_WORDS`
 WHERE DS >= CURRENT_DATE-7 
 ;

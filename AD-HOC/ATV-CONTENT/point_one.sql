@@ -1,3 +1,26 @@
+-- description: Métricas de retención de usuarios por título, género, tipo y proveedor de contenido a nivel mensual
+-- domain: behaviour
+-- product: mplay
+-- use_case: analysis
+-- grain: month, title, genres, content_type, content_provider
+-- time_grain: monthly
+-- date_column: P.DS
+-- date_filter: last_3_complete_months
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+--   - TOTAL_USUARIOS_RETENIDOS_CONTENT: usuarios únicos retenidos que consumieron el título en el mes
+--   - TOTAL_VIEWERS_TITULO: usuarios únicos que consumieron el título en el mes
+--   - RATIO_RETENCION: proporción de usuarios retenidos sobre el total de viewers del título
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+--   - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+--   - WHOWNER.DM_MKT_MPLAY_RAW_PLAYS
+-- joins:
+--   - PLAYS.SIT_SITE_ID = CATALOGUE.SIT_SITE_ID
+--   - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+--   - PLAYS.USER_ID = RAW_PLAYS.USER_ID
+-- owner: data_team
+
 WITH CATALOGO_LIMPIO AS (
     SELECT 
         CONTENT_ID,

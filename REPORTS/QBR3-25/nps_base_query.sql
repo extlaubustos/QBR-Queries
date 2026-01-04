@@ -1,3 +1,23 @@
+-- description: Extracción y limpieza de resultados de encuestas NPS (Net Promoter Score) y CSAT (Customer Satisfaction). Consolida motivos de recomendación (Promotores), detractores, y niveles de satisfacción en dimensiones clave como variedad, publicidad, usabilidad y performance. 
+-- domain: experience 
+-- product: mplay 
+-- use_case: customer satisfaction analysis / NPS reporting 
+-- grain: nps_rel_qualtrics_response_id, nps_rel_cus_cust_id 
+-- time_grain: daily (with month/quarter aggregation) 
+-- date_column: NPS_REL_RES_END_DATE 
+-- date_filter: awareness = 'Si' and top sites (MLA, MLB, MLM, MLC, MCO) 
+-- threshold_rule: N/A 
+-- metrics: 
+-- - NPS_VALUE: Valor numérico del NPS (Promotor, Neutro, Detractor) 
+-- - CSAT_VARIETY: Top 2 boxes de satisfacción con la variedad de contenido 
+-- - CSAT_ADVERTISING: Top 2 boxes de satisfacción con la carga publicitaria 
+-- - CSAT_USABILITY: Top 2 boxes de satisfacción con la facilidad de uso 
+-- - CSAT_PERFORMANCE: Top 2 boxes de satisfacción con el desempeño técnico 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_CX_NPS_REL_MPLAY 
+-- joins: 
+-- - N/A 
+-- owner: data_team
 SELECT 
 
 NPS_REL_RES_END_DATE, NPS_REL_RES_END_MONTH, 

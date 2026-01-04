@@ -1,3 +1,21 @@
+-- description: Tabla de catálogo de contenidos MPlay con tipo y proveedor normalizados
+-- domain: content
+-- product: mplay
+-- use_case: modeling
+-- grain: site, content
+-- time_grain: not_applicable
+-- date_column: none
+-- date_filter: none
+-- threshold_rule: none
+-- metrics:
+--   - none (tabla de dimensiones / referencia)
+-- tables_read:
+--   - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+--   - CATALOGUE.CONTENT_ID = PLAYS.CONTENT_ID
+-- owner: data_team
+
 CREATE OR REPLACE TABLE meli-sbox.MPLAY.MPLAY_CONTENT_ADJUSTED AS (
     SELECT
     C.SIT_SITE_ID,

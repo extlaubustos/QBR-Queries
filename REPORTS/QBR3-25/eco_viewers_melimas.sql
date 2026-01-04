@@ -1,3 +1,24 @@
+-- description: Análisis de penetración del programa de lealtad Meli+ (L6) en la audiencia de Mercado Play. Segmenta a los usuarios por plataforma de consumo (Smart TV, Mobile, Desktop, Cast) para comparar el volumen de Viewers frente a Suscriptores activos. 
+-- domain: commercial / loyalty 
+-- product: mplay 
+-- use_case: subscription penetration / audience profiling 
+-- grain: month_id, sit_site_id, platform_actual 
+-- time_grain: monthly 
+-- date_column: MONTH_ID / DS 
+-- date_filter: >= '2023-01-01' para compras, histórico acumulado para visualizaciones. 
+-- threshold_rule: 
+-- - Valid Play: playback_time >= 20s 
+-- - Active Subscription: Estatus 'active' o 'ready' para IDs específicos de Meli+. 
+-- metrics: 
+-- - TOTAL_VIEWERS: Cantidad de usuarios únicos con reproducción efectiva. 
+-- - TOTAL_SUSCRIPTORES: Cantidad de Viewers que poseen una suscripción activa a Meli+. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_ORD_ORDERS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - meli-bi-data.WHOWNER.BT_MP_PAY_SUBSCRIPTION 
+-- joins: 
+-- - VIEWERS_PLATFORM_LABELLED (v) LEFT JOIN SUBSCRIPTIONS_L6 (s): Cruce por CUS_CUST_ID para identificar usuarios premium dentro de la audiencia de video. 
+-- owner: data_team
 WITH BUYERS_MARKETPLACE AS (
   SELECT DISTINCT 
     DATE_TRUNC(bd.ord_created_dt, MONTH) AS MONTH_ID,

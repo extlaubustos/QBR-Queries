@@ -1,3 +1,27 @@
+-- description: Segmentación de usuarios por recurrencia (New / Retained / Recovered), nivel de consumo y combinación de plataformas en un timeframe mensual
+-- domain: behaviour
+-- product: mplay
+-- use_case: user_segmentation
+-- grain: site, month_id, cust_type, tvm_timeframe, platform, flag_log
+-- time_grain: monthly
+-- date_column: DS
+-- date_filter: up_to (hasta current_date - 1, con filtro desde 2024-01-01 a nivel timeframe)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - TVM_TOTAL: minutos totales reproducidos por segmento y timeframe
+-- - TOTAL_USERS: usuarios únicos por segmento y timeframe
+-- dimensions:
+-- - FLAG_N_R_FINAL: clasificación del usuario según recurrencia (NEW, RETAINED, RECOVERED)
+-- - TVM_TIMEFRAME: bucket de consumo total en el timeframe
+-- - PLATFORM: combinación de plataformas consumidas (SMART, MOBILE, DESKTOP, CAST, MULTI)
+-- - PLATFORM_V2: categorización simplificada de plataforma
+-- - FLAG_LOG: indicador de usuario logueado
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+-- - Derivación interna por USER_ID, SIT_SITE_ID y TIME_FRAME_ID
+-- owner: data_team
+
     WITH NEW_RET_RECO AS
     (
         SELECT 

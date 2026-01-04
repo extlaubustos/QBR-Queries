@@ -1,3 +1,37 @@
+-- description: Análisis de usuarios recuperados con métricas de continuidad, consumo y cambio de plataforma (actual vs previa) a nivel mensual
+-- domain: consumption
+-- product: mplay
+-- use_case: recovered_users_continuation_platform_shift
+-- grain: site_id, month, return_flag, platform_actual, platform_prev
+-- time_grain: monthly
+-- recovery_definition:
+-- - recovered if days_between_consecutive_plays > 30
+-- - return_buckets:
+--   - 30+ : DIF_DAYS >= 30
+--   - 60+ : DIF_DAYS >= 60
+--   - 90+ : DIF_DAYS >= 90
+-- continuation_definition:
+-- - M1: next_view <= 30 days
+-- - M2: 31–60 days
+-- - M3: 61–90 days
+-- - M4: 91–120 days
+-- - M4+: >120 days
+-- consumption_metrics:
+-- - TVM: total view minutes
+-- - ATV: average TVM per user
+-- - TVM_PREV / ATV_PREV: consumo del timeframe previo
+-- platform_logic:
+-- - SMART: consumo en TV
+-- - MOBILE: consumo en mobile
+-- - DESKTOP: consumo en desktop
+-- - CAST: consumo cast
+-- filters:
+-- - playback_time >= 20 seconds
+-- - date_range: from 2025-01-01 to current_date
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- owner: data_team
+
 WITH BASE_USERS AS (
   SELECT
     SIT_SITE_ID,

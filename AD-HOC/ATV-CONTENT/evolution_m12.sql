@@ -1,3 +1,26 @@
+-- description: Análisis de cohortes de retención mensual estricta de usuarios según tipo de consumo (movies, series o ambos)
+-- domain: behaviour
+-- product: mplay
+-- use_case: retention_analysis
+-- grain: cohort_month, month_offset, viewing_flag
+-- time_grain: monthly
+-- date_column: P.DS
+-- date_filter: between (desde 2025-01-01 hasta current_date - 1)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - USERS_COUNT_RETAINED: usuarios únicos retenidos sin huecos de actividad desde el mes de cohorte (M0) hasta el mes correspondiente
+-- - MONTH_OFFSET: meses transcurridos desde el mes de cohorte (M0, M1, ..., M12)
+-- dimensions:
+-- - VIEWING_FLAG: tipo de consumo mensual (Only Movies, Only Series, Both)
+-- - COHORT_VIEWING_FLAG_M0: tipo de consumo del usuario en el mes de cohorte
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- joins:
+-- - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+-- - PLAYS.SIT_SITE_ID = CATALOGUE.SIT_SITE_ID
+-- owner: data_team
+
 WITH user_monthly_activity AS (
     -- 1. Tu consulta original: actividad mensual por usuario (La base de todos los usuarios M0)
     SELECT

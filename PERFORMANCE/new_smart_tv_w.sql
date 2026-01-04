@@ -1,3 +1,21 @@
+-- description: Métricas de nuevos viewers y consumo (TVM) por semana, plataforma TV y estado de login
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, week, platform, login_flag
+-- time_grain: weekly
+-- date_column: DS
+-- date_filter: none
+-- threshold_rule: playback_time >= 20s y primer consumo del usuario
+-- metrics:
+--   - NEW_VIEWERS: usuarios únicos que realizan su primera reproducción (>= 20s) en el período
+--   - TVM: minutos totales reproducidos por nuevos viewers con threshold 20s
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+--   - none
+-- owner: data_team
+
 SELECT 
 SIT_SITE_ID,
 WEEK_ID,

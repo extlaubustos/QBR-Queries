@@ -1,3 +1,21 @@
+-- description: Métricas de conversiones de usuarios por plataforma, sitio, origen y equipo
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: device_platform, sit_site_id, origin_path, team
+-- time_grain: daily
+-- date_column: FIRST_DS_USER
+-- date_filter: no específico (según rango de la tabla)
+-- threshold_rule: none
+-- metrics:
+-- - CONVERTIONS: suma de conversiones por usuario
+-- tables_read:
+-- - meli-sbox.MPLAY.MPLAY_NEGOCIO_ATT_AHA_MOMENT_USERS
+-- - meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - MPLAY_NEGOCIO_ATT_AHA_MOMENT_USERS join LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION por origin_path
+-- owner: data_team
+
 SELECT
 DEVICE_PLATFORM,
 SIT_SITE_ID,

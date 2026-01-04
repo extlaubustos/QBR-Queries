@@ -1,3 +1,28 @@
+-- description: Identificación de usuarios recuperados (RECOVERED) que mantienen alta calidad de engagement antes y después de la recuperación
+-- domain: lifecycle
+-- product: mplay
+-- use_case: recovered_users_engagement_consistency
+-- grain: user
+-- time_grain: pre_post_recover_period
+-- recovery_definition:
+-- - RECOVERED if days_between_consecutive_plays > 30
+-- - recovery_window: last 90 days
+-- engagement_score:
+-- - score = (HIGH*3 + MED*2 + LOW*1) / (meses_posibles * 3)
+-- engagement_buckets:
+-- - A_HIGH_ENG >= 0.35
+-- - B_MEDIUM_ENG >= 0.20 and < 0.35
+-- - C_LOW_ENG < 0.20
+-- filters:
+-- - playback_time >= 20 seconds
+-- - sites: MLB, MLM
+-- output:
+-- - users with A_HIGH_ENG both PRE and POST recovery
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- owner: data_team
+
 WITH NEW_RET_RECO AS (
   SELECT
     *,

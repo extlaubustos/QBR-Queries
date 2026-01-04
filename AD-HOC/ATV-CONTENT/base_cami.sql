@@ -1,3 +1,28 @@
+-- description: Métricas de consumo (viewers logueados y TVM) por título, tipo de contenido, proveedor y etapa del ciclo de vida del usuario
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, snapshot_date, life_cycle_stage, content_type_adjusted, nbcu_flag, title
+-- time_grain: aggregated_period
+-- date_column: V.DS
+-- date_filter: between (relative)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+--   - VIEWERS_LOGGED: usuarios logueados únicos con al menos una reproducción >= 20s
+--   - TVM: minutos totales reproducidos por usuarios logueados con threshold 20s
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+--   - WHOWNER.BT_MKT_MPLAY_SESSION
+--   - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+--   - MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- joins:
+--   - PLAYS.SESSION_ID = SESSION.SESSION_ID
+--   - PLAYS.SIT_SITE_ID = CATALOGUE.SIT_SITE_ID
+--   - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+--   - PLAYS.CUS_CUST_ID = USER_LIFECYCLE.USER_ID
+-- owner: data_team
+
+
 DECLARE DATE_FROM DATE;
 DECLARE DATE_TO DATE;
 DECLARE SITES ARRAY<STRING>;

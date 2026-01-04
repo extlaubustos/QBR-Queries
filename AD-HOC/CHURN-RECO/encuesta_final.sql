@@ -1,3 +1,39 @@
+-- description: Clasificación integral de usuarios MPlay según estado de actividad, churn y recuperación, combinando engagement histórico y comportamiento reciente
+-- domain: behaviour
+-- product: mplay
+-- use_case: user_segmentation_engagement
+-- grain: user
+-- time_grain: mixed (historical + last_3_months)
+-- date_columns:
+-- - SN.SNAPSHOT_DATE
+-- - UM.LAST_PLAY_DATE
+-- - P.START_PLAY_TIMESTAMP
+-- - DS
+-- date_filters:
+-- - snapshot_date <= current_date
+-- - last_play_recency <= 3 months
+-- - recovered_window = last 90 days
+-- sites: MLB, MLM
+-- engagement_score:
+-- - formula: (HIGH*3 + MED*2 + LOW*1) / (total_possible_months * 3)
+-- - thresholds:
+--   - A_HIGH_ENG >= 0.35
+--   - B_MEDIUM_ENG >= 0.20
+--   - C_LOW_ENG < 0.20
+-- output_segments:
+-- - ACTIVE_HIGH_ENG
+-- - RECOVERED_HIGH_ENG
+-- - CHURN_LOW_ENG
+-- - CHURN_HIGH_ENG
+-- tables_read:
+-- - MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+-- - lifecycle_snapshot ↔ last_snapshot by SIT_SITE_ID, USER_ID
+-- - lifecycle_snapshot ↔ plays by USER_ID
+-- owner: data_team
+
 WITH
 ACTIVO_HIGH AS (
     with USER_MONTHS AS (

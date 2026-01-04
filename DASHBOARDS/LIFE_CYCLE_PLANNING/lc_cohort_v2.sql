@@ -1,3 +1,25 @@
+-- description: Retención mensual de usuarios por cohorte según tiempo de reproducción
+-- domain: behaviour
+-- product: mplay
+-- use_case: cohort_retention
+-- grain: sit_site_id, month_cohort_acq, month_number
+-- time_grain: monthly
+-- date_column: MONTH_COHORT_ACQ
+-- date_filter: hasta CURRENT_DATE - 1
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - TOTAL_USERS_COHORT: cantidad de usuarios únicos en la cohorte
+-- - TOTAL_USERS_RETENTION: usuarios con TVM > 0 en el mes de retención
+-- - TVM: tiempo total de reproducción por cohorte/mes
+-- - ALL_MONTH_USER_RET: usuarios con actividad en todos los días del mes
+-- - ALL_MONTH_TVM: TVM de usuarios ALL_MONTH
+-- tables_read:
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - meli-bi-data.WHOWNER.LK_TIM_DAYS
+-- joins:
+-- - PLAY_FIRST_DAY join TABLE_CALENDAR por FECHA_COHORT
+-- owner: data_team
+
 WITH PLAY_DAYS AS (
                SELECT DISTINCT
                 P.SIT_SITE_ID AS SIT_SITE_ID,

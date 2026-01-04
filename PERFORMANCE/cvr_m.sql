@@ -1,3 +1,26 @@
+-- description: Métricas de visitas, visitas válidas y viewers a nivel sesión por sitio y mes
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, month
+-- time_grain: monthly
+-- date_column: s.DS
+-- date_filter: between
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+--   - VISITORS: usuarios únicos con al menos una sesión registrada
+--   - VALID_VISITORS: usuarios únicos con sesiones consideradas válidas según criterios de interacción
+--   - VIEWERS: usuarios únicos con al menos una sesión con consumo de video >= 20s
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_SESSION
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+--   - SESSION.SIT_SITE_ID = PLAYS.SIT_SITE_ID
+--   - SESSION.USER_ID = PLAYS.USER_ID
+--   - SESSION.SESSION_ID = PLAYS.SESSION_ID
+-- owner: data_team
+
+
 DECLARE SITES ARRAY<STRING>;
 DECLARE date_from DATE;
 DECLARE date_to DATE;
@@ -50,71 +73,14 @@ WITH SESSIONS AS
                                                                         AND P.PLAYBACK_TIME_MILLISECONDS/1000 >= 20                                               
               GROUP BY ALL
 )
---, New_Viewers AS (
---              SELECT
---                    PL.DS AS DS,
---                    DATE_TRUNC(PL.DS, MONTH) AS MONTH_ID,
---                    PL.SIT_SITE_ID,
---                    PL.USER_ID,
---              FROM  `WHOWNER.BT_MKT_MPLAY_PLAYS` AS PL
---                WHERE PL.PLAYBACK_TIME_MILLISECONDS/1000 >= 20 ---Para considerar solo views validos
---              QUALIFY ROW_NUMBER() OVER(PARTITION BY USER_ID ORDER BY ds ASC) = 1
-
---)
---, New_Visitors AS (
---                SELECT
---                      s.SIT_SITE_ID ,
---                      s.ds,
---                      DATE_TRUNC(s.DS, MONTH) AS MONTH_ID,
---                      s.USER_ID,
---                      s.SESSION_ID
---                FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION` AS s
---                WHERE s.SIT_SITE_ID IN UNNEST(SITES)
---                QUALIFY ROW_NUMBER() OVER(PARTITION BY USER_ID ORDER BY ds ASC) = 1
---)
---, Life_cycle as (
---SELECT *
---FROM `meli-sbox.MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT`
---QUALIFY ROW_NUMBER() OVER(PARTITION BY USER_ID,DATE_TRUNC(SNAPSHOT_DATE, MONTH) ORDER BY SNAPSHOT_DATE ASC) = 1
---)
 SELECT 
       s.sit_site_id,
       DATE_TRUNC(s.DS, MONTH) AS MONTH_ID,
-      --DATE_TRUNC(s.DS, WEEK(MONDAY)) as WEEK_ID,
-      --s.FLAG_VALID_VISIT,
-      --CASE WHEN VIS.USER_ID IS NOT NULL THEN 1 ELSE 0 END AS NEW_VISITOR_FLAG,
-      --CASE WHEN V.USER_ID IS NOT NULL THEN 1 ELSE 0 END AS NEW_VIEWER_FLAG,
-      --s.FIRST_EVENT_SOURCE,
-      --LC.SEGMENT_LIFE_CYCLE,
-      --LC.TYPE_USER,
-      --o.channel,
-      --o.team,
-      --o.access,
-      --o.negocio,
-      --CASE WHEN S.DEVICE_PLATFORM IN ('/tv/android') THEN '/tv/android'
-      --     WHEN S.DEVICE_PLATFORM IN ('/tv/Tizen') THEN '/tv/Tizen'
-      --     WHEN S.DEVICE_PLATFORM IN ('/tv/Web0S') THEN '/tv/Web0S'
-      --     ELSE COALESCE(o.SOURCE_TYPE,'Otros')
-      --     END AS Origin,
-      --COALESCE(o.SOURCE_TYPE,'Otros') as Origin,
-      --COUNT(DISTINCT s.melidata_session_id) Sessions,
-      --COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.melidata_session_id ELSE NULL END) as Sessions_valid_visit, ---no tiene en cuenta los bounced
-      --COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.melidata_session_id ELSE NULL END) as Sessions_valid_view,
-      --SUM(s.TVM) as TVM,
+
       COUNT(DISTINCT s.USER_ID) as Visitors,
       COUNT(DISTINCT CASE WHEN s.FLAG_VALID_VISIT IS TRUE THEN s.USER_ID ELSE NULL END) as Valid_Visitors,
       COUNT(DISTINCT CASE WHEN s.TSV >= 20 THEN s.USER_ID ELSE NULL END) as Viewers
 FROM SESSION_PLAY s
---LEFT JOIN New_Viewers V on S.USER_ID = V.USER_ID 
---                        AND S.sit_site_id = V.sit_site_id 
---                        AND  S.MONTH_ID = V.MONTH_ID
---LEFT JOIN New_Visitors VIS on S.USER_ID = VIS.USER_ID 
---                              AND S.sit_site_id = VIS.sit_site_id 
---                              AND  S.MONTH_ID = VIS.MONTH_ID
---LEFT JOIN Life_cycle LC ON S.USER_ID = LC.USER_ID 
---                        AND S.sit_site_id = LC.sit_site_id 
---                        AND  DATE_TRUNC(s.DS, MONTH) = DATE_TRUNC(LC.SNAPSHOT_DATE, MONTH)
---LEFT JOIN `meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION` o on coalesce(s.FIRST_EVENT_SOURCE,'NULL') = coalesce(o.SOURCE_TYPE,'NULL')
 GROUP BY ALL
 ORDER BY MONTH_ID ASC
 ;

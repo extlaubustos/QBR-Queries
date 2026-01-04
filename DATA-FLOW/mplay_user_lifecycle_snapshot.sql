@@ -1,3 +1,32 @@
+-- description: Generación de Snapshot histórico del ciclo de vida del usuario en Mercado Play (User Lifecycle). Consolida comportamiento de navegación, consumo de contenido (TVM, títulos), datos demográficos y atributos de ecosistema (LTV, Apps, Buyer Category). 
+-- domain: behaviour / marketing 
+-- product: mplay 
+-- use_case: user segmentation / churn prevention / lifecycle analysis 
+-- grain: snapshot_date, sit_site_id, user_id 
+-- time_grain: daily / snapshot 
+-- date_column: SNAPSHOT_DATE 
+-- date_filter: incremental (current snapshot <SNP_DATE>) 
+-- threshold_rule: 
+-- - Valid View: playback_time >= 20s 
+-- - Segment definition: Based on last play date (Retention <30d, Churn 31-60d, Latent 61-90d, Stock >90d) 
+-- - Type User: Calculated by TVM, distinct days, and distinct titles in the last 30 days 
+-- metrics: 
+-- - TVM_LAST_30_SNP: minutos consumidos en los últimos 30 días del snapshot 
+-- - DISTINCT_DAYS_LAST_30_SNP: días con actividad de visualización en los últimos 30 días 
+-- - DISTINCT_TITLES_LAST_30_SNP: títulos únicos consumidos en los últimos 30 días 
+-- - LTV: Lifetime Value del usuario en el ecosistema 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION 
+-- - meli-bi-data.SBOX_MARKETING.LK_CUST_ML_LTV 
+-- - meli-bi-data.WHOWNER.BT_MKT_OWNCHANNELS_DEVICES 
+-- - meli-bi-data.WHOWNER.LK_CUS_CUSTOMERS_DATA 
+-- - meli-bi-data.SBOX_MKTVIS.BT_SHIPPING_CUSTOMER_ADDRESS 
+-- joins: 
+-- - SESSIONS LEFT JOIN VIEWERS: Cruce de navegación con visualización efectiva 
+-- - union_db LEFT JOIN customer_data (Multiple): Enriquecimiento con demografía (Age, Gender, NSE), ubicación y comportamiento en ML/MP 
+-- owner: data_team
+
 -- TMP PLAYS AND SESSIONS
 DROP TABLE IF EXISTS `meli-bi-data.TMP.MPLAY_VIEWERS`;
 CREATE TABLE `meli-bi-data.TMP.MPLAY_VIEWERS`( 

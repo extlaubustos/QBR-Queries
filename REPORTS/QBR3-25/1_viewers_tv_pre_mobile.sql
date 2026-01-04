@@ -1,3 +1,24 @@
+-- description: Análisis de influencia Cross-Device (Mobile-to-TV) enfocado en reproducciones: Identifica a los usuarios logueados que consumieron contenido en Smart TV habiendo tenido una sesión activa en Mobile en las 24 horas previas, midiendo la recurrencia de este comportamiento de "salto" entre dispositivos. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: cross-platform conversion / mobile-to-tv play influence 
+-- grain: month_id 
+-- time_grain: monthly 
+-- date_column: DS 
+-- date_filter: dinámico (desde 2025-04-01 hasta ayer) 
+-- threshold_rule: 
+-- - Valid TV Play: reproducción >= 20s en Smart TV por usuario logueado. 
+-- - Mobile Influence: Sesión en Mobile no rebotada finalizada antes del inicio de la reproducción en TV (ventana de 24 horas). 
+-- metrics: 
+-- - USERS_MOBILE_BEFORE_TV_PLAY: Usuarios únicos mensuales que pasaron de Mobile a TV antes de un play. 
+-- - GRAND_TOTAL_TV_VIEWERS: Total de usuarios únicos logueados que reprodujeron en TV. 
+-- - MOBILE_TO_TV_VIEWER_SHARE: Porcentaje de la audiencia de TV influenciada por actividad previa en Mobile. 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_SESSION 
+-- joins: 
+-- - ALL_TV_PLAYS_LOGGED (P) INNER JOIN BT_MKT_MPLAY_SESSION (S_MOBILE): Cruce por USER_ID y SIT_SITE_ID con validación de secuencia temporal (Timestamp Mobile < Timestamp TV Play). 
+-- owner: data_team
 DECLARE date_from DATE;
 DECLARE date_to DATE;
 SET date_from = '2025-04-01';

@@ -1,3 +1,29 @@
+-- description: Monitoreo y análisis de funnels de conversión para tráfico proveniente de campañas MATT hacia Mercado Play, evaluando la navegación por VCM, VCP y reproducción de contenido. 
+-- domain: discovery 
+-- product: mplay 
+-- use_case: funnel monitoring / marketing performance 
+-- grain: sit_site_id, ds, hour_melidata, device_platform, version, connectivity_type, os_version, matt_implementation, device_manufacturer, flag_tool, flag_content, flag_pom 
+-- time_grain: hourly (dashboard) 
+-- date_column: DS 
+-- date_filter: last 7 days (current_date-7) 
+-- threshold_rule: unique session per site (qualify row_number = 1), playback continuous (play_20s) 
+-- metrics: 
+-- - TRAFICO: cantidad total de sesiones provenientes de MATT 
+-- - MPLAY: sesiones con interacción en Mercado Play 
+-- - VCP: sesiones que alcanzaron una View Content Page 
+-- - VCM: sesiones que alcanzaron una View Content Multi-title 
+-- - CONVERTION_VCP_VCM: sesiones con conversión a VCP o VCM 
+-- - PLAYER_NOT_AD: reproducciones iniciadas excluyendo anuncios 
+-- - PLAYER: reproducciones totales 
+-- - PLAY_20S: reproducciones efectivas de al menos 20 segundos 
+-- tables_read: 
+-- - meli-bi-data.MELIDATA.TRACKS 
+-- - meli-bi-data.WHOWNER.BT_MATT_METADATA 
+-- joins: 
+-- - TRACKS (A) INNER JOIN BT_MATT_METADATA (B): Filtrado por MATT_TOOL y Business Unit 
+-- - TRAFICO_MATT (A) LEFT JOIN VCP_VCM (B): Cruce de sesiones MATT con eventos de navegación posterior 
+-- owner: data_team
+
 -- Crea o reemplaza una tabla temporal en el sandbox de MPLAY llamada MPLAY_NEGOCIO_CONTROL_POM_VCM_VCP_STAGE
 CREATE OR REPLACE TABLE `meli-sbox.MPLAY.MPLAY_NEGOCIO_CONTROL_POM_VCM_VCP_STAGE` AS (
 -- Con esta CTE vamos a traer todo el trafico que provenga de MATT siempre y cuando sea de MERCADO PLAY

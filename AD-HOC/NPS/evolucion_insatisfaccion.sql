@@ -1,3 +1,28 @@
+-- description: Proporción de usuarios insatisfechos por categoría (variedad, publicidad, facilidad de uso, desempeño, notificaciones) de MPlay por sitio y trimestre, con trimestre calculado a partir de la fecha de cierre de NPS
+-- domain: customer_experience
+-- product: mplay
+-- use_case: reporting
+-- grain: site, quarter, user
+-- time_grain: quarterly
+-- date_column: NPS_REL_RES_END_DATE
+-- date_filter: awareness = 'Si' AND SIT_SITE_ID IN ('MLB','MLM','MLA','MLC','MCO')
+-- threshold_rule: CSAT_* = 0 indica insatisfacción
+-- metrics:
+-- - PCT_USERS_VARIETY: % de usuarios insatisfechos con variedad
+-- - PCT_USERS_ADVERTISING: % de usuarios insatisfechos con publicidad
+-- - PCT_USERS_USABILITY: % de usuarios insatisfechos con facilidad de uso
+-- - PCT_USERS_PERFORMANCE: % de usuarios insatisfechos con desempeño
+-- - PCT_USERS_RECOMMENDATIONS: % de usuarios insatisfechos con notificaciones
+-- tables_read:
+-- - WHOWNER.BT_CX_NPS_REL_MPLAY
+-- joins:
+-- - TOTAL.SIT_SITE_ID = VARIEDAD.SIT_SITE_ID AND TOTAL.QUARTER = VARIEDAD.QUARTER
+-- - TOTAL.SIT_SITE_ID = PUBLICIDAD.SIT_SITE_ID AND TOTAL.QUARTER = PUBLICIDAD.QUARTER
+-- - TOTAL.SIT_SITE_ID = FACILIDAD.SIT_SITE_ID AND TOTAL.QUARTER = FACILIDAD.QUARTER
+-- - TOTAL.SIT_SITE_ID = FUNCIONAMIENTO.SIT_SITE_ID AND TOTAL.QUARTER = FUNCIONAMIENTO.QUARTER
+-- - TOTAL.SIT_SITE_ID = NOTIFICACIONES.SIT_SITE_ID AND TOTAL.QUARTER = NOTIFICACIONES.QUARTER
+-- owner: data_team
+
 WITH BASE AS (
   
   SELECT 

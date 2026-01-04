@@ -1,3 +1,21 @@
+-- description: Clasificación de usuarios por tipo (new, retained, recovered), nivel de consumo y plataforma dominante, agregada por mes
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, month, tvm_bucket, customer_type, login_flag, platform
+-- time_grain: monthly
+-- date_column: DS
+-- date_filter: <= current_date - 1
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+--   - TVM_TOTAL: minutos totales reproducidos por usuario en el mes
+--   - TOTAL_USERS: cantidad de usuarios únicos por segmento
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+--   - none (uso de CTEs y funciones de ventana)
+-- owner: data_team
+
 WITH NEW_RET_RECO AS
   (
     SELECT 

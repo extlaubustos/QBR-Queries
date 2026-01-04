@@ -1,3 +1,24 @@
+-- description: Análisis de Cohortes de Retención de usuarios (Retention Cohorts) basado en periodos de 30 días desde el primer consumo. Calcula la recurrencia de visualización y el volumen de consumo (TVM). 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: retention analysis / cohort lifecycle 
+-- grain: sit_site_id, month_cohort_acq, month_retention 
+-- time_grain: monthly (sliding window of 30 days) 
+-- date_column: FIRST_DAY (Cohort Acquisition) / DAY_PLAY (Retention) 
+-- date_filter: >= '2023-07-01' 
+-- threshold_rule: playback_time >= 20s. La retención se mide en bloques de 30 días exactos mediante una tabla calendario custom. 
+-- metrics: 
+-- - TOTAL_USERS_COHORT: Tamaño total de la cohorte adquirida en un mes específico. 
+-- - TOTAL_USERS_RETENTION: Usuarios únicos de la cohorte que volvieron a consumir en el mes N. 
+-- - TVM: Minutos totales reproducidos por la cohorte en el periodo de retención. 
+-- - ALL_MONTH_USER_RET: Usuarios con retención consecutiva perfecta (recurrentes en todos los meses hasta el actual). 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- - meli-bi-data.WHOWNER.LK_TIM_DAYS 
+-- joins: 
+-- - PLAY_FIRST_DAY LEFT JOIN TABLE_CALENDAR: Para normalizar los periodos de 30 días por cada usuario según su fecha de entrada. 
+-- - USERS_CALENDAR LEFT JOIN PLAY_DAYS: Para atribuir el consumo histórico a los periodos de retención definidos. 
+-- owner: data_team
 -- En PLAY_DAYS se agrupan por SIT_SITE_ID, USER_ID y DAY_PLAY, y se trae el total de minutos reproducidos por día
 WITH PLAY_DAYS AS (
                SELECT DISTINCT

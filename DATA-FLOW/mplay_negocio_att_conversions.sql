@@ -1,3 +1,31 @@
+-- description: Generación de métricas de adquisición, retención y AHA moment de usuarios MPLAY con ponderación por origen y fechas de conversión
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting / user_acquisition_analysis
+-- grain: user_id, sit_site_id, origin_path, device_platform, fecha_conv
+-- time_grain: daily
+-- date_column: FECHA_CONV / FECHA_ESTIMULOS
+-- date_filter: between / dynamic (FECHA_FROM a CURRENT_DATE)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - CONVERTIONS: peso de conversión ponderado por orden de días hasta conversión
+-- - RET_1_30: retención a 30 días post-conversión
+-- - RET_31_60: retención a 31-60 días post-conversión
+-- - AHA_MOMENT: indicador de usuario que alcanza AHA (≥3 días de consumo en 30 días)
+-- - TOTAL_TRAFICO: usuarios con sesión
+-- - TOTAL_TRAFICO_VISITOR: usuarios con interacción significativa
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - WHOWNER.LK_TIM_DAYS
+-- - MPLAY.MPLAY_NEGOCIO_ATT_NEW_USERS
+-- - MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - PLAYS.USER_ID = SESSION.USER_ID
+-- - PLAYS.SIT_SITE_ID = SESSION.SIT_SITE_ID
+-- - ORIGIN.ORIGIN_PATH = LOOKUP.SOURCE_TYPE
+-- owner: data_team
+
 -- Declara la variable FECHA_FROM
 DECLARE FECHA_FROM DATE;
 -- Borra de MPLAY_NEGOCIO_ATT_NEW_USERS todo registro de los últimos 9 dias

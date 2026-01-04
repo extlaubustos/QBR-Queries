@@ -1,4 +1,29 @@
--- Separo la clásica NEW_RET_RECO para optimizar el analisis en 2 subconsultas. En USER_PLAYS_AGG se obtiene la actividad de los usuarios y en USER_DAILY_ACTIVITY se calcula el FLAG_N_R_DAILY como se hacia en NEW_RET_RECO
+-- description: Identificación de AHA Moments mensuales por usuario, con segmentación por plataforma, FLAG_N_R y rango de minutos reproducidos.
+-- domain: behaviour
+-- product: mplay
+-- use_case: aha_moment_analysis / user_engagement
+-- grain: SIT_SITE_ID, USER_ID, TIME_FRAME_ID
+-- time_grain: monthly
+-- date_column: DS / TIME_FRAME_ID
+-- date_filter: between
+-- threshold_rule: PLAYBACK_TIME_MILLISECONDS >= 20000
+-- metrics:
+-- - TVM_TOTAL_TIMEFRAME: minutos reproducidos totales en el mes
+-- - TOTAL_TV: minutos en Smart-TV
+-- - TOTAL_MOBILE: minutos en Mobile
+-- - TOTAL_DESKTOP: minutos en Desktop
+-- - TOTAL_CAST: minutos en Cast
+-- - FLAG_AHA_MOMENT: indicador de si el usuario alcanzó AHA Moment
+-- - TOTAL_USERS: cantidad de usuarios por segmento
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.LK_MPLAY_FIRST_PLAY
+-- - WHOWNER.LK_MPLAY_FIRST_SESSION
+-- joins:
+-- - USER_MONTH_SUMMARY LEFT JOIN FINAL_AHA_USERS ON SIT_SITE_ID, USER_ID, TIME_FRAME_ID
+-- - USER_MONTH_SUMMARY LEFT JOIN USER_MONTHLY_FLAG ON SIT_SITE_ID, USER_ID, TIME_FRAME_ID
+-- owner: data_team
+
 WITH USER_PLAYS_AGG AS (
 SELECT
 SIT_SITE_ID,

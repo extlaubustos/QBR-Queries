@@ -1,3 +1,24 @@
+-- description: Distribución mensual de consumo por género normalizado, con ponderación según posición del género en el catálogo
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: month, genre
+-- time_grain: monthly
+-- date_column: P.DS
+-- date_filter: playback_time >= 20s
+-- threshold_rule: SAFE_DIVIDE(PLAYBACK_TIME_MILLISECONDS, 1000) >= 20
+-- metrics:
+-- - CANTIDAD_PLAYS: cantidad de reproducciones válidas (>= 20s)
+-- - CANTIDAD_TITULOS: cantidad de contenidos distintos con consumo
+-- - TOTAL_PLAYS_PONDERADOS: suma de plays ponderados por peso del género según su posición
+-- tables_read:
+-- - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - generos_temp (tabla temporal de normalización de géneros)
+-- joins:
+-- - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+-- owner: data_team
+
 CREATE TEMPORARY TABLE generos_temp (
     genre_original STRING,
     genre_normalizado STRING

@@ -1,10 +1,26 @@
+-- description: Métricas de viewers y consumo (TVM) en plataformas Smart TV por sitio y semana
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: site, week, platform
+-- time_grain: weekly
+-- date_column: DS
+-- date_filter: none
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+--   - VIEWERS_SMART: usuarios únicos con consumo en dispositivos Smart TV
+--   - TVM_SMART: minutos totales reproducidos en plataformas Smart TV con threshold 20s
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- joins:
+--   - PLAYS.USER_ID = FIRST_PLAY.USER_ID
+--   - PLAYS.SIT_SITE_ID = FIRST_PLAY.SIT_SITE_ID
+-- owner: data_team
+
 SELECT DISTINCT
 P.SIT_SITE_ID,
 DATE_TRUNC(DS, WEEK(MONDAY)) as WEEK_ID,
 LOWER(DEVICE_PLATFORM) PLATFORM,
---CASE WHEN P.DS = FIRST_DATE THEN 'NEW' ELSE 'OLD' END AS FLAG_NEW,
---CASE WHEN SAFE_CAST(P.USER_ID AS INT64) IS NOT NULL THEN 'LOG' ELSE 'NOT_LOG' END AS FLAG_LOG_SESSION,
---COUNT(DISTINCT P.SESSION_ID) AS SESSION_VIEWERS,
 COUNT(DISTINCT P.USER_ID) AS VIEWERS_SMART,
 SUM(PLAYBACK_TIME_MILLISECONDS/60000) AS TVM_SMART
 FROM `meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS` P

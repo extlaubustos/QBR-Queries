@@ -1,3 +1,23 @@
+-- description: Clasificación de usuarios MPlay según score de engagement calculado por actividad histórica, segmentación de lifecycle y características del usuario
+-- domain: behaviour
+-- product: mplay
+-- use_case: user_segmentation
+-- grain: user
+-- time_grain: aggregated_period
+-- date_column: SN.SNAPSHOT_DATE
+-- date_filter: <= current_date
+-- metrics:
+-- - SCORE_ENG: score de engagement ponderado por meses de actividad high, medium y low
+-- - TOTAL_USERS: cantidad de usuarios únicos
+-- - CALIDAD_ABSOLUTA: clasificación de engagement (A/B/C)
+-- tables_read:
+-- - MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- joins:
+-- - SNAPSHOT.SIT_SITE_ID = USER.SIT_SITE_ID
+-- - SNAPSHOT.USER_ID = USER.USER_ID
+-- owner: data_team
+
 WITH USER_MONTHS AS (
   SELECT
     SN.SIT_SITE_ID,

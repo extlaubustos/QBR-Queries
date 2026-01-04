@@ -1,3 +1,41 @@
+-- description: Tabla agregada de usuarios MPlay por touchpoint, clasificada por timeframe (daily, weekly, monthly), tipo de usuario, origen y plataforma.
+-- domain: media_analytics
+-- product: mplay
+-- use_case: user_touchpoint_analysis
+-- grain: site, timeframe, user_classification, origin, platform
+-- time_grain: daily, weekly, monthly
+-- date_column: DS
+-- date_filter: PLAYBACK_TIME_MILLISECONDS/1000 >= 20 AND DS <= CURRENT_DATE-1
+-- metrics:
+-- - Sessions: total de sesiones
+-- - Sessions_valid_visit: sesiones válidas
+-- - Sessions_valid_view: sesiones con reproducción válida
+-- - TVM: tiempo total de reproducción en minutos
+-- - Visitors: total de usuarios distintos
+-- - Valid_Visitors: usuarios con visitas válidas
+-- - Viewers: usuarios con reproducción válida
+-- dimensions:
+-- - timeframe_type: DAILY, WEEKLY, MONTHLY
+-- - timeframe_id: fecha del timeframe
+-- - sit_site_id: identificador de sitio
+-- - MONTH_ID: mes
+-- - WEEK_ID: semana
+-- - Origin: origen del primer evento
+-- - User_Classification: NEW, RETAINED, RECOVERED
+-- - touchpoint_team: combinación Clasificacion-Subclasificacion-Team
+-- - touchpoint_no_team: combinación Clasificacion-Subclasificacion
+-- - Clasificacion, Clasificacion_2: categoría de touchpoint
+-- - team: equipo asignado
+-- - platform: SMART, MOBILE, DESKTOP, OTHER
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.BT_MKT_MPLAY_SESSION
+-- - MPLAY.CLASIFICATION_ORIGINS
+-- - MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - LEFT JOIN de orígenes y equipos de clasificación por origin
+-- owner: data_team
+
 CREATE OR REPLACE TABLE meli-sbox.MPLAY.MPLAY_TOUCHPOINT_USER AS
 (
   -- CTE para clasificar a los usuarios como NEW, RETAINED, RECOVERED

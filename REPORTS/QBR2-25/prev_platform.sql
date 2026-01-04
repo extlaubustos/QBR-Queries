@@ -1,3 +1,23 @@
+-- description: Análisis evolutivo de usuarios que adoptan Smart TV, comparando métricas de frecuencia y consumo (TVM) entre el periodo actual y su periodo de actividad previo. 
+-- domain: behaviour 
+-- product: mplay 
+-- use_case: platform transition / user value analysis 
+-- grain: month_id, flag_log, platform_prev, platform_actual, life_cycle_prev, life_cycle_actual 
+-- time_grain: monthly 
+-- date_column: MONTH_ID 
+-- date_filter: dinámico (6 meses hacia atrás desde 2025-08-01) 
+-- threshold_rule: playback_time >= 20s. Se identifica consumo en Smart TV mediante DEVICE_PLATFORM LIKE '%TV%'. 
+-- metrics: 
+-- - TOTAL_USERS: usuarios únicos en la transición de plataforma definida 
+-- - TVM_ACTUAL / TVM_PREV: minutos totales reproducidos en el mes actual vs. el mes de actividad anterior 
+-- - FREC_ACTUAL / FREC_PREV: promedio de días distintos con consumo en el mes actual vs. el anterior 
+-- tables_read: 
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS 
+-- joins: 
+-- - USERS_SMART (A) JOIN RESUMEN_USER_TF (R): Para obtener el estado anterior de usuarios RECOVERED/RETAINED. 
+-- - UNION ALL entre PLATFORM_PREV_MONTH (existentes) y USERS_NEW (nuevos sin historial). 
+-- - JOIN con FREC_USER_TF y TVM_PREV: Para el cálculo de KPIs de engagement. 
+-- owner: data_team
 DECLARE mes_inicial DATE DEFAULT DATE '2025-08-01';
 DECLARE meses_hacia_atras INT64 DEFAULT 6;
 

@@ -1,3 +1,25 @@
+-- description: Métricas de consumo y completitud de contenido por título y temporada, incluyendo viewers, reproducciones, TVM y completion rate
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: title, season_number
+-- time_grain: aggregated_period
+-- date_column: P.DS
+-- date_filter: rolling_window (últimos ~5 años acotados a últimos ~6 meses)
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+-- - VIEWERS: usuarios únicos con playback >= 20s
+-- - CANTIDAD_CONTENIDOS: cantidad de contenidos distintos consumidos
+-- - REPRODUCCIONES: combinaciones únicas de contenido y usuario con playback >= 20s
+-- - TVM: minutos reproducidos con threshold 20s
+-- - COMPLETION_RATE: TVM / (VIEWERS * RUNTIME)
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- joins:
+-- - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+-- - PLAYS.SIT_SITE_ID = CATALOGUE.SIT_SITE_
+
 WITH BASE AS (
     SELECT
     C.SEASON_NUMBER AS SEASON_NUMBER,

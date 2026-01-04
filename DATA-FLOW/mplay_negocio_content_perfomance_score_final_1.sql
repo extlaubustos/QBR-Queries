@@ -1,3 +1,37 @@
+-- description: Métricas de adquisición, retención, engagement y performance de contenido por usuario y contenido en distintos marcos de tiempo
+-- domain: behaviour
+-- product: mplay
+-- use_case: reporting
+-- grain: user, content, time_frame
+-- time_grain: monthly (configurable según TIME_FRAME_ID)
+-- date_column: DS / TIME_FRAME_ID
+-- date_filter: hasta el día anterior a la fecha actual (DS <= CURRENT_DATE-1)
+-- threshold_rule: PLAYBACK_TIME_MILLISECONDS >= 20s
+-- metrics:
+-- - ACQUISITION_USERS: usuarios nuevos cuya primera interacción es con el contenido
+-- - ACQUISITION_AHA_USERS: usuarios nuevos que alcanzan AHA moment
+-- - TOTAL_USERS: usuarios totales interactuando con el contenido
+-- - TOTAL_USERS_RET: usuarios retenidos al mes siguiente
+-- - PERCENT_80_USERS: usuarios en percentil 80 de engagement
+-- - RECOVER_USERS: usuarios recuperados
+-- - TOTAL_TVM: minutos totales vistos en el timeframe
+-- - TVM_ACUMULADO_TIMEFRAME: TVM acumulado por contenido
+-- - TOTAL_RUNTIME_ACUMULADO: runtime total del contenido
+-- - SCORE_FINAL: score ponderado de performance de contenido
+-- tables_read:
+-- - meli-sbox.MPLAY.MPLAY_NEGOCIO_ATT_NEW_USERS
+-- - meli-bi-data.WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - meli-bi-data.WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- - meli-sbox.MPLAY.LK_MPLAY_SOURCE_TYPE_ORIGIN_SESSION
+-- joins:
+-- - PLAYS.USER_ID = NEW_USERS.USER_ID
+-- - PLAYS.SIT_SITE_ID = NEW_USERS.SIT_SITE_ID
+-- - CONTENT_DATA.SIT_SITE_ID = CATALOGUE.SIT_SITE_ID
+-- - CONTENT_DATA.CONTENT_ID = CATALOGUE.CONTENT_ID
+-- - TOTAL_SOURCE_TRAFICO.SIT_SITE_ID = SOURCE_CONVERTION.SIT_SITE_ID
+-- - TOTAL_SOURCE_TRAFICO.ORIGIN_PATH = SOURCE_CONVERTION.ORIGIN_PATH
+-- owner: data_team
+
 CREATE OR REPLACE TABLE `meli-sbox.MPLAY.MPLAY_NEGOCIO_ADQUITSTION_METRICS` AS (
   -- CTE para calcular las conversiones por sitio, origen y fecha
   WITH SOURCE_CONVERTION AS (

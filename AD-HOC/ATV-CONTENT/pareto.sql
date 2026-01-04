@@ -1,3 +1,26 @@
+-- description: Análisis Pareto de consumo por título, destacando viewers nuevos del mes anterior (M0) y su contribución al total mensual
+-- domain: behaviour
+-- product: mplay
+-- use_case: analysis
+-- grain: month, content
+-- time_grain: monthly
+-- date_column: P.DS
+-- date_filter: between
+-- threshold_rule: playback_time >= 20s
+-- metrics:
+--   - TOTAL_VIEWERS: usuarios únicos que consumieron el título en el mes
+--   - VIEWERS_NEW_M0: viewers pertenecientes a la cohorte de nuevos usuarios del mes anterior
+--   - PCT_NEW_M0: porcentaje de viewers nuevos M0 sobre el total del título
+--   - PARETO_PROGRESS_PCT: avance acumulado del Pareto sobre el total mensual de consumo
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+--   - WHOWNER.DM_MKT_MPLAY_RAW_PLAYS
+--   - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- joins:
+--   - PLAYS.USER_ID = RAW_PLAYS.USER_ID
+--   - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+-- owner: data_team
+
 WITH NEW_USERS_PREVIOUS_MONTH AS (
   SELECT
     USER_ID,

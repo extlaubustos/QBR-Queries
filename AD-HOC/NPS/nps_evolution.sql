@@ -1,3 +1,27 @@
+-- description: Resumen NPS de MPlay por sitio y trimestre, con conteo de promotores, detractores y neutrales, NPS promedio y proporciones
+-- domain: customer_experience
+-- product: mplay
+-- use_case: reporting
+-- grain: site, quarter
+-- time_grain: quarterly
+-- date_column: NPS_REL_RES_END_DATE
+-- date_filter: awareness = 'Si' AND SIT_SITE_ID IN ('MLB','MLM','MLA','MLC','MCO')
+-- metrics:
+-- - TOTAL: Total de usuarios encuestados
+-- - PROMOTORES: Conteo de usuarios promotores (NPS_VALUE = 1)
+-- - DETRACTORES: Conteo de usuarios detractores (NPS_VALUE = -1)
+-- - NEUTRALES: Conteo de usuarios neutrales (NPS_VALUE = 0)
+-- - NPS: Promedio de NPS
+-- - PERC_PROMOTORES: Porcentaje de promotores sobre el total
+-- - PERC_DETRACTORES: Porcentaje de detractores sobre el total
+-- - PERC_NEUTRALES: Porcentaje de neutrales sobre el total
+-- - PERC_DETR_NEU: Porcentaje combinado de detractores y neutrales sobre el total
+-- tables_read:
+-- - WHOWNER.BT_CX_NPS_REL_MPLAY
+-- joins:
+-- - TOTAL_PROMOTORES join TOTAL, TOTAL_DETRACTORES, TOTAL_NEUTRALES on SIT_SITE_ID y QUARTER
+-- owner: data_team
+
 WITH BASE AS (
   
   SELECT 

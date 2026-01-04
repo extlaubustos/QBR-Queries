@@ -1,3 +1,23 @@
+-- description: Detección de usuarios MPlay con alto engagement reciente pertenecientes a segmentos inactivos (churn, latent, stock) para oportunidades de reactivación
+-- domain: behaviour
+-- product: mplay
+-- use_case: reactivation_targeting
+-- grain: user
+-- time_grain: aggregated_period
+-- date_column: SN.SNAPSHOT_DATE
+-- date_filter: <= current_date
+-- threshold_rule: last_play_recency <= 3 months
+-- metrics:
+-- - SCORE_ENG: score de engagement ponderado por actividad high, medium y low
+-- - CALIDAD_ABSOLUTA: clasificación de engagement (A/B/C)
+-- tables_read:
+-- - MPLAY.MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- - MPLAY.LAST_MPLAY_USER_LIFECYCLE_SNAPSHOT
+-- joins:
+-- - SNAPSHOT.SIT_SITE_ID = USER.SIT_SITE_ID
+-- - SNAPSHOT.USER_ID = USER.USER_ID
+-- owner: data_team
+
 WITH USER_MONTHS AS (
   SELECT
     SN.SIT_SITE_ID,

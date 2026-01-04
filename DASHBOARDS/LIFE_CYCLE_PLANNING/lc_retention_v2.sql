@@ -1,4 +1,23 @@
--- `EXPLOTACION.LYL_LCM_RETENTION_CHURN_30_DAYS`
+-- description: Retención y churn de usuarios a 30 días basada en consumo de TVM, segmentada por plataforma y rango de minutos reproducidos.
+-- domain: behaviour
+-- product: mplay
+-- use_case: retention / churn_analysis
+-- grain: SIT_SITE_ID, USER_ID, TIM_DAY
+-- time_grain: daily
+-- date_column: DS / TIM_DAY
+-- date_filter: between
+-- threshold_rule: PLAYBACK_TIME_MILLISECONDS >= 20000
+-- metrics:
+-- - TVM: minutos reproducidos por usuario en el periodo
+-- - TOTAL_ACTIVE_TIM_DAY: cantidad de usuarios activos en el día
+-- - TOTAL_RETENTION_TIM_DAY_CHURN: cantidad de usuarios retenidos 30 días después
+-- tables_read:
+-- - WHOWNER.BT_MKT_MPLAY_PLAYS
+-- - WHOWNER.LK_TIM_DAYS
+-- joins:
+-- - DATA_USERS INNER JOIN LK_TIM_DAYS ON DS BETWEEN TIM_DAY-29 AND TIM_DAY
+-- - TABLE_CALENDAR LEFT JOIN TABLE_CALENDAR (self-join) para cálculo de retention 30 días
+-- owner: data_team
 
 WITH DATA_USERS AS (
 SELECT

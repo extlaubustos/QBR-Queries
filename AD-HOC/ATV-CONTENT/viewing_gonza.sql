@@ -1,3 +1,27 @@
+-- description: Métricas de consumo por usuario y contenido, incluyendo nuevos viewers y finalización de contenido por dispositivo
+-- domain: behaviour
+-- product: mplay
+-- use_case: analysis
+-- grain: date, site, content, user, device
+-- time_grain: daily
+-- date_column: DS
+-- date_filter: between
+-- threshold_rule: playback_time >= 20s y finalización >= 90% del runtime
+-- metrics:
+--   - TVM: minutos totales reproducidos por usuario y contenido
+--   - ATV: minutos promedio reproducidos por play
+--   - DAYS: cantidad de días distintos con consumo
+--   - NEW_VIEWERS: indicador de primer consumo histórico del usuario
+--   - IS_FINALIZER: indicador de finalización del contenido en el dispositivo principal
+-- tables_read:
+--   - WHOWNER.BT_MKT_MPLAY_PLAYS
+--   - WHOWNER.LK_MKT_MPLAY_CATALOGUE
+-- joins:
+--   - PLAYS.CONTENT_ID = CATALOGUE.CONTENT_ID
+--   - PLAYS.SIT_SITE_ID = CATALOGUE.SIT_SITE_ID
+--   - PLAYS.CUS_CUST_ID = FINALIZATION.CUS_CUST_ID
+-- owner: data_team
+
 WITH PLAYS AS (
     SELECT
         DS, DATE_TRUNC(PL.DS, MONTH) AS FECHA_MONTH, PL.SIT_SITE_ID, CAST(PL.user_id AS STRING) AS cus_cust_id, 
