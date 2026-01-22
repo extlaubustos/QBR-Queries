@@ -1,0 +1,85 @@
+INSERT INTO meli-sbox.MPLAY.MPLAY_CTR_TOUCHPOINTS (MONTH_ID, TOUCHPOINT, SIT_SITE_ID, DEVICE_PLATFORM, PRINTS, CLICKS) VALUES
+('2025-08-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/android', 2127127, 22784),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/android', 2200034, 21224),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/android', 1057362, 10950),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/android', 208175, 2462),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/android', 60282, 555),
+('2025-08-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/ios', 1490, 71),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/ios', 1498, 65),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/ios', 1090, 29),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/ios', 58, 2),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLB', '/mobile/ios', 17, 0),
+
+
+('2025-08-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/android', 118828, 2377),
+('2025-09-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/android', 136112, 2590),
+('2025-10-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/android', 166728, 2986),
+('2025-11-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/android', 153854, 2937),
+('2025-12-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/android', 166876, 3154),
+('2025-08-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/ios', 61791, 822),
+('2025-09-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/ios', 69690, 852),
+('2025-10-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/ios', 88764, 1094),
+('2025-11-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/ios', 85909, 988),
+('2025-12-02', 'FIN DE SCROLL MP', 'MCO', '/mobile/ios', 89620, 1064),
+
+
+
+('2025-08-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/android', 3889517, 44267),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/android', 3248192, 32615),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/android', 3184645, 32338),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/android', 2946300, 29505),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/android', 3446434, 33313),
+('2025-08-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/ios', 445567, 4383),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/ios', 170114, 2479),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/ios', 152638, 2525),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/ios', 152689, 2281),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLA', '/mobile/ios', 161179, 3313),
+
+
+
+('2025-08-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/android', 176600, 2930),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/android', 170274, 2412),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/android', 199601, 2432),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/android', 178186, 2349),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/android', 190447, 2708),
+('2025-08-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/ios', 9281, 229),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/ios', 9299, 171),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/ios', 8194, 45),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/ios', 417, 16),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLC', '/mobile/ios', 422, 25),
+
+
+('2025-08-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/android', 840985, 21130),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/android', 868255, 18996),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/android', 998692, 20100),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/android', 1015393, 16948),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/android', 1128430, 21445),
+('2025-08-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/ios', 1436, 70),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/ios', 1471, 54),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/ios', 1562, 78),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/ios', 1634, 70),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLM', '/mobile/ios', 1719, 116),
+
+
+('2025-08-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/android', 238579, 2146),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/android', 247356, 2012),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/android', 275201, 2343),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/android', 268253, 2550),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/android', 265234, 1469),
+('2025-08-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/ios', 181024, 796),
+('2025-09-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/ios', 190277, 818),
+('2025-10-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/ios', 213691, 1013),
+('2025-11-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/ios', 217120, 1050),
+('2025-12-02', 'FIN DE SCROLL MP', 'MLU', '/mobile/ios', 179112, 580),
+
+
+('2025-08-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/android', 27632, 1557),
+('2025-09-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/android', 27671, 1329),
+('2025-10-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/android', 28638, 1241),
+('2025-11-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/android', 29864, 1302),
+('2025-12-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/android', 30472, 1446),
+('2025-08-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/ios', 8724, 279),
+('2025-09-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/ios', 8888, 297),
+('2025-10-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/ios', 10176, 311),
+('2025-11-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/ios', 10663, 316),
+('2025-12-02', 'FIN DE SCROLL MP', 'MPE', '/mobile/ios', 10963, 393)
